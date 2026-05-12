@@ -1,1 +1,48 @@
-<!DOCTYPE html><html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><title>進貨單</title><link rel="stylesheet" href="/css/app.css"></head><body><div class="app"><div th:replace="~{fragments :: sidebar('purchase')}"></div><main class="main"><div class="topbar"><div><h1>進貨單</h1><div class="subtitle">第一版後端主流程：建立草稿、確認進貨、產生批次與條碼貼紙</div></div></div><div class="card"><div class="card-header">建立進貨草稿</div><div class="card-body"><div class="grid grid-3"><div><label>供應商 ID</label><input id="supplierId" placeholder="先輸入供應商ID"></div><div><label>進貨日期</label><input id="purchaseDate" type="date"></div></div><p><button class="btn-primary" onclick="createDraft()">建立草稿</button></p><div id="msg"></div></div></div><div class="card"><div class="card-header">開發說明</div><div class="card-body"><p>目前此頁保留 UI 骨架。下一步會補上明細輸入表格，將產品快照、批發價、銷售價、P15、k0、數量寫入 <code>purchase_order_items</code>。</p></div></div><script>async function createDraft(){const fd=new URLSearchParams(); if(val('supplierId'))fd.append('supplierId',val('supplierId')); if(val('purchaseDate'))fd.append('purchaseDate',val('purchaseDate')); const r=await fetch('/api/purchases/draft',{method:'POST',body:fd}); const j=await r.json(); document.getElementById('msg').innerHTML='<pre>'+JSON.stringify(j,null,2)+'</pre>'; } function val(id){return document.getElementById(id).value;}</script></main></div></body></html>
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>新增進貨單</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="app">
+    <div th:replace="~{fragments :: sidebar('purchase')}"></div>
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <h1>新增進貨單</h1>
+                <div class="subtitle">先建立草稿，再進入明細頁新增進貨品項、確認入庫與列印貼紙。</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">建立進貨草稿</div>
+            <div class="card-body">
+                <form method="post" action="/purchases/draft">
+                    <div class="grid grid-3">
+                        <div>
+                            <label>供應商</label>
+                            <select name="supplierId" required>
+                                <option value="">請選擇供應商</option>
+                                <option th:each="s : ${suppliers}" th:value="${s.supplierId}" th:text="${s.supplierCode + '｜' + s.supplierName}"></option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>進貨日期</label>
+                            <input name="purchaseDate" type="date">
+                        </div>
+                        <div style="display:flex;align-items:end;">
+                            <button class="btn-primary" type="submit">建立草稿</button>
+                        </div>
+                    </div>
+                </form>
+                <div class="alert alert-info">
+                    若尚未建立供應商或產品，請先到「供應商管理」與「商品管理」建檔。
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
