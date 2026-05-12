@@ -1,0 +1,40 @@
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+*.pdf
+*.xlsx
+*.txt
+*.csv
+*.png
+*.jpg
+
+takens/
+target/
+app/
+.idea/
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+replay_pid*
+src/main/java/.DS_Store
+src/main/.DS_Store
+src/.DS_Store
+.DS_Store
+*/.DS_Store

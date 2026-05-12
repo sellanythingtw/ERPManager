@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>產品管理</title><link rel="stylesheet" href="/css/app.css"></head>
+<body><div class="app"><div th:replace="~{fragments :: sidebar('products')}"></div><main class="main">
+<div class="topbar"><div><h1>產品管理</h1><div class="subtitle">產品建檔與後續 Excel 匯入功能預留</div></div></div>
+<div class="card"><div class="card-header">新增產品</div><div class="card-body">
+<div class="grid grid-4">
+<div><label>品號</label><input id="productCode" placeholder="空白則自動編號"></div>
+<div><label>類別</label><input id="category"></div>
+<div><label>品名</label><input id="productName"></div>
+<div><label>花名小名</label><input id="productAlias"></div>
+<div><label>規格</label><input id="specification"></div>
+<div><label>顏色</label><input id="color"></div>
+<div><label>單位</label><input id="unit" value="個"></div>
+<div><label>安全庫存</label><input id="safetyStock" type="number" value="0"></div>
+<div><label>預設進貨價</label><input id="defaultPurchasePrice" type="number" value="0"></div>
+<div><label>預設銷貨價</label><input id="defaultSalePrice" type="number" value="0"></div>
+</div><p><button class="btn-primary" onclick="saveProduct()">儲存產品</button></p><div id="msg"></div></div></div>
+<div class="card"><div class="card-header">產品列表</div><div class="card-body"><table><thead><tr><th>品號</th><th>類別</th><th>品名</th><th>小名</th><th>單位</th><th>安全庫存</th></tr></thead><tbody><tr th:each="p : ${products}"><td th:text="${p.productCode}"></td><td th:text="${p.category}"></td><td th:text="${p.productName}"></td><td th:text="${p.productAlias}"></td><td th:text="${p.unit}"></td><td th:text="${p.safetyStock}"></td></tr></tbody></table></div></div>
+<script>
+async function saveProduct(){
+ const body={productCode:val('productCode'),category:val('category'),productName:val('productName'),productAlias:val('productAlias'),specification:val('specification'),color:val('color'),unit:val('unit'),safetyStock:Number(val('safetyStock')),defaultPurchasePrice:Number(val('defaultPurchasePrice')),defaultSalePrice:Number(val('defaultSalePrice'))};
+ const r=await fetch('/api/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); const j=await r.json(); document.getElementById('msg').innerHTML='<div class="alert alert-info">'+j.message+'</div>'; if(j.success) setTimeout(()=>location.reload(),600);
+} function val(id){return document.getElementById(id).value;}
+</script>
+</main></div></body></html>
