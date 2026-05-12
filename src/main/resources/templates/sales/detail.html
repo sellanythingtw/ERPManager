@@ -57,7 +57,7 @@
             <div class="card-body">
                 <table>
                     <thead>
-                    <tr><th>#</th><th>條碼</th><th>品號</th><th>品名</th><th>小名</th><th>供應商</th><th>進貨日</th><th>單價</th><th>數量</th><th>小計</th></tr>
+                    <tr><th>#</th><th>條碼</th><th>品號</th><th>品名</th><th>小名</th><th>供應商</th><th>進貨日</th><th>單價</th><th>數量</th><th>小計</th><th th:if="${order.status == 'DRAFT'}">操作</th></tr>
                     </thead>
                     <tbody>
                     <tr th:each="item, st : ${items}">
@@ -71,8 +71,13 @@
                         <td th:text="${item.unitPrice}"></td>
                         <td th:text="${item.quantity}"></td>
                         <td th:text="${item.amount}"></td>
+                        <td th:if="${order.status == 'DRAFT'}">
+                            <form method="post" th:action="@{'/sales/' + ${order.salesId} + '/items/' + ${item.itemId} + '/delete'}">
+                                <button class="btn-outline" type="submit">刪除</button>
+                            </form>
+                        </td>
                     </tr>
-                    <tr th:if="${#lists.isEmpty(items)}"><td colspan="10">尚未新增明細</td></tr>
+                    <tr th:if="${#lists.isEmpty(items)}"><td colspan="11">尚未新增明細</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -106,7 +111,7 @@
                     <div><label>付款類型</label><input th:value="${order.paymentType}" readonly></div>
                     <div><label>付款狀態</label><input th:value="${order.paymentStatus}" readonly></div>
                 </div>
-                <div class="alert alert-info" th:if="${order.pdfPath != null}">銷貨單 PDF：<span th:text="${order.pdfPath}"></span></div>
+                <div class="alert alert-info" th:if="${order.pdfPath != null}">銷貨單 PDF：<a th:href="@{/local-file(path=${order.pdfPath})}" target="_blank" th:text="${order.pdfPath}"></a></div>
             </div>
         </div>
     </main>
@@ -129,6 +134,7 @@ if (barcodeInput) {
             document.getElementById('lookupName').value = d.productName + (d.productAlias ? ' ' + d.productAlias : '');
             document.getElementById('lookupQty').value = d.remainingQuantity;
             document.getElementById('lookupPrice').value = d.salePrice;
+            document.getElementById('quantityInput').max = d.remainingQuantity;
             msg.className = 'alert alert-info';
             msg.innerText = '已帶入品項，請輸入數量並加入明細。';
             document.getElementById('quantityInput').focus();
@@ -136,6 +142,19 @@ if (barcodeInput) {
         } catch (err) {
             msg.className = 'alert alert-error';
             msg.innerText = err.message;
+        }
+    });
+    document.getElementById('quantityInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const max = Number(this.max || 0);
+            const qty = Number(this.value || 0);
+            if (max > 0 && qty > max) {
+                msg.className = 'alert alert-error';
+                msg.innerText = '數量不足，目前剩餘：' + max;
+                return;
+            }
+            this.form.submit();
         }
     });
 }

@@ -4,7 +4,7 @@ server:
 
 spring:
   application:
-    name: InventoryLocalApp
+    name: ERPManager
   datasource:
     url: jdbc:sqlite:./app/data/app.db
     driver-class-name: org.sqlite.JDBC
@@ -20,8 +20,8 @@ spring:
     cache: false
 
 inventory:
-  app-name: 本地端進銷存系統
-  version: 0.2.0
+  app-name: ERPManager 本地端進銷存系統
+  version: 0.3.0
   base-dir: ./app
   pdf-dir: ./app/files/pdf
   label-dir: ./app/files/labels

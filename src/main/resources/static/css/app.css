@@ -32,3 +32,14 @@ td { padding:12px; border-bottom:1px solid #e5e7eb; font-size:14px; }
 .alert-info { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
 .alert-error { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
 @media (max-width: 1000px) { .app { display:block; } .sidebar { width:auto; } .grid-3, .grid-4 { grid-template-columns:1fr; } }
+
+@media print {
+  .sidebar, .topbar .btn, .no-print, button, .btn { display: none !important; }
+  .app { display: block; }
+  .main { padding: 0; }
+  .card { box-shadow: none; border: 0; margin-bottom: 10px; }
+  .card-header { border-bottom: 1px solid #333; }
+  body { background: #fff; }
+  table { font-size: 12px; }
+  th, td { padding: 6px; }
+}

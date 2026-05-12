@@ -47,6 +47,13 @@ public class SalesOrderController {
         return "redirect:/sales/" + salesId;
     }
 
+
+    @PostMapping("/sales/{salesId}/items/{itemId}/delete")
+    public String deleteItemPage(@PathVariable Long salesId, @PathVariable Long itemId) {
+        salesOrderService.deleteItem(salesId, itemId);
+        return "redirect:/sales/" + salesId;
+    }
+
     @PostMapping("/sales/{salesId}/confirm")
     public String confirmPage(@PathVariable Long salesId, @RequestParam(defaultValue = "CASH") String paymentType) {
         salesOrderService.confirm(salesId, paymentType);

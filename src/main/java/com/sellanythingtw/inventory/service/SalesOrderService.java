@@ -122,6 +122,16 @@ public class SalesOrderService {
     }
 
     @Transactional
+    public void deleteItem(Long salesId, Long itemId) {
+        SalesOrder order = getOrder(salesId);
+        if (!"DRAFT".equals(order.getStatus())) throw new IllegalStateException("只有草稿銷貨單可以刪除明細");
+        SalesOrderItem item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("找不到銷貨明細"));
+        if (!salesId.equals(item.getSalesId())) throw new IllegalArgumentException("明細不屬於此銷貨單");
+        itemRepository.delete(item);
+    }
+
+    @Transactional
     public SalesOrder confirm(Long salesId, String paymentType) {
         SalesOrder order = salesOrderRepository.findById(salesId)
                 .orElseThrow(() -> new IllegalArgumentException("找不到銷貨單"));

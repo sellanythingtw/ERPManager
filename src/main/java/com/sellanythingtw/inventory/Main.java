@@ -22,8 +22,8 @@ public class Main {
         }));
 
         MsgUtils.printMsg();
-        MsgUtils.printMsg("歡迎來到本地端進銷存系統！");
-        MsgUtils.printMsg("程式名稱: InventoryLocalApp, 程式版本: 0.1.0");
+        MsgUtils.printMsg("歡迎來到 ERPManager 本地端進銷存系統！");
+        MsgUtils.printMsg("程式名稱: ERPManager, 程式版本: 0.3.0");
         MsgUtils.printMsg("系統模式: 本地 Java + SQLite");
         MsgUtils.printMsg();
 

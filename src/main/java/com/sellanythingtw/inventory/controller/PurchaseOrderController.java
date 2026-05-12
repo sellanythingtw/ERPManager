@@ -78,7 +78,14 @@ public class PurchaseOrderController {
     @PostMapping("/labels/lots/{lotId}")
     public String createLabelPage(@PathVariable Long lotId, @RequestParam Long purchaseId) {
         labelPrintService.createLotLabelPdf(lotId);
-        return "redirect:/purchases/" + purchaseId;
+        return "redirect:/purchases/" + purchaseId + "?label=1";
+    }
+
+    @PostMapping("/labels/purchases/{purchaseId}/batch")
+    public String createPurchaseLabelsPage(@PathVariable Long purchaseId,
+                                           @RequestParam(defaultValue = "1") Integer copies) {
+        labelPrintService.createPurchaseLabelsPdf(purchaseId, copies);
+        return "redirect:/purchases/" + purchaseId + "?labels=1";
     }
 
     @PostMapping("/api/purchases/draft")
@@ -117,4 +124,12 @@ public class PurchaseOrderController {
     public Map<String, Object> createLabel(@PathVariable Long lotId) {
         return ApiResult.ok("標籤 PDF 已產生", "path", labelPrintService.createLotLabelPdf(lotId));
     }
+
+    @PostMapping("/api/labels/purchases/{purchaseId}/batch")
+    @ResponseBody
+    public Map<String, Object> createPurchaseLabels(@PathVariable Long purchaseId,
+                                                    @RequestParam(defaultValue = "1") Integer copies) {
+        return ApiResult.ok("整張進貨單貼紙 PDF 已產生", "path", labelPrintService.createPurchaseLabelsPdf(purchaseId, copies));
+    }
+
 }
