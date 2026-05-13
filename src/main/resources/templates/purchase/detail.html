@@ -59,13 +59,17 @@
         <div class="card">
             <div class="card-header">進貨明細</div>
             <div class="card-body">
-                <div class="alert alert-info" th:if="${param.label}">單一貼紙 PDF 已產生，請至 app/files/labels/purchase 查看。</div>
-                <div class="alert alert-info" th:if="${param.labels}">整張進貨單貼紙 PDF 已產生，請至 app/files/labels/purchase 查看。</div>
-                <form method="post" th:action="@{'/labels/purchases/' + ${order.purchaseId} + '/batch'}" style="margin-bottom:14px; display:flex; gap:10px; align-items:end;">
+                <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
+                <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+                <div class="alert alert-info" th:if="${order.status == 'DRAFT'}">進貨單確認後才會建立批次條碼，屆時才能列印貼紙。</div>
+                <form th:if="${order.status == 'CONFIRMED' and !#lists.isEmpty(lots)}" method="post" th:action="@{'/labels/purchases/' + ${order.purchaseId} + '/batch'}" style="margin-bottom:14px; display:flex; gap:10px; align-items:end;">
                     <div style="width:160px;"><label>每個品項列印張數</label><input name="copies" type="number" min="1" value="1"></div>
                     <button class="btn-primary" type="submit">列印全部貼紙 PDF</button>
                     <a class="btn btn-outline" href="/settings/labels">貼紙設定</a>
                 </form>
+                <div style="margin-bottom:14px;" th:if="${order.status != 'CONFIRMED' or #lists.isEmpty(lots)}">
+                    <a class="btn btn-outline" href="/settings/labels">貼紙設定</a>
+                </div>
                 <table>
                     <thead>
                     <tr>
