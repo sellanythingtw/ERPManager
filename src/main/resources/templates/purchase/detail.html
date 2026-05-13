@@ -15,7 +15,8 @@
                 <div class="subtitle">確認進貨後會建立進貨批次、條碼與庫存入庫異動。</div>
             </div>
             <div>
-                <a class="btn btn-outline" href="/purchases/new">新增進貨單</a>
+                <a class="btn btn-outline" href="/purchases">進貨單列表</a>
+                <a class="btn btn-primary" href="/purchases/new">新增進貨單</a>
             </div>
         </div>
 
@@ -61,10 +62,11 @@
             <div class="card-body">
                 <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
                 <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+                <div class="alert alert-info" th:if="${labelFilePath != null}">貼紙 PDF：<a th:href="@{/local-file(path=${labelFilePath})}" target="_blank" th:text="${labelFilePath}"></a></div>
                 <div class="alert alert-info" th:if="${order.status == 'DRAFT'}">進貨單確認後才會建立批次條碼，屆時才能列印貼紙。</div>
-                <form th:if="${order.status == 'CONFIRMED' and !#lists.isEmpty(lots)}" method="post" th:action="@{'/labels/purchases/' + ${order.purchaseId} + '/batch'}" style="margin-bottom:14px; display:flex; gap:10px; align-items:end;">
+                <form th:if="${order.status == 'CONFIRMED' and !#lists.isEmpty(lots)}" method="post" target="_blank" th:action="@{'/labels/purchases/' + ${order.purchaseId} + '/batch'}" style="margin-bottom:14px; display:flex; gap:10px; align-items:end;">
                     <div style="width:160px;"><label>每個品項列印張數</label><input name="copies" type="number" min="1" value="1"></div>
-                    <button class="btn-primary" type="submit">列印全部貼紙 PDF</button>
+                    <button class="btn-primary" type="submit">產生並開啟全部貼紙 PDF</button>
                     <a class="btn btn-outline" href="/settings/labels">貼紙設定</a>
                 </form>
                 <div style="margin-bottom:14px;" th:if="${order.status != 'CONFIRMED' or #lists.isEmpty(lots)}">
@@ -97,6 +99,12 @@
                     <tr th:if="${#lists.isEmpty(items)}"><td colspan="11">尚未新增明細</td></tr>
                     </tbody>
                 </table>
+                <div class="grid grid-4" style="margin-top:16px;">
+                    <div><label>總數量</label><input th:value="${order.totalQuantity}" readonly></div>
+                    <div><label>未稅總額</label><input th:value="${order.subtotalAmount}" readonly></div>
+                    <div><label>稅額</label><input th:value="${order.taxAmount}" readonly></div>
+                    <div><label>總金額</label><input th:value="${order.totalAmount}" readonly></div>
+                </div>
                 <div style="margin-top:16px;" th:if="${order.status == 'DRAFT'}">
                     <form method="post" th:action="@{'/purchases/' + ${order.purchaseId} + '/confirm'}" onsubmit="return confirm('確認進貨後會建立批次、條碼並增加庫存，是否繼續？')">
                         <button class="btn-primary" type="submit">確認進貨並建立條碼批次</button>
@@ -122,9 +130,9 @@
                         <td th:text="${lot.remainingQuantity}"></td>
                         <td th:text="${lot.labelPrintedCount}"></td>
                         <td>
-                            <form method="post" th:action="@{'/labels/lots/' + ${lot.lotId}}">
+                            <form method="post" target="_blank" th:action="@{'/labels/lots/' + ${lot.lotId}}">
                                 <input type="hidden" name="purchaseId" th:value="${order.purchaseId}">
-                                <button class="btn-outline" type="submit">產生貼紙 PDF</button>
+                                <button class="btn-outline" type="submit">產生並開啟貼紙 PDF</button>
                             </form>
                         </td>
                     </tr>

@@ -51,7 +51,13 @@ public class SalesOrderService {
         order.setDocumentDate(today);
         order.setSalesDate(salesDate == null ? today : salesDate);
         order.setCustomerId(customerId);
+        order.setStatus("DRAFT");
+        recalculateTotals(order, List.of());
         return salesOrderRepository.save(order);
+    }
+
+    public List<SalesOrder> listAll() {
+        return salesOrderRepository.findAllByOrderByCreatedAtDesc();
     }
 
 
@@ -118,7 +124,9 @@ public class SalesOrderService {
         item.setQuantity(quantity);
         item.setAmount(lot.getSalePrice().multiply(BigDecimal.valueOf(quantity)));
         item.setSortOrder(itemRepository.findBySalesIdOrderBySortOrderAsc(salesId).size() + 1);
-        return itemRepository.save(item);
+        SalesOrderItem saved = itemRepository.save(item);
+        recalculateAndSave(order);
+        return saved;
     }
 
     @Transactional
@@ -129,6 +137,30 @@ public class SalesOrderService {
                 .orElseThrow(() -> new IllegalArgumentException("找不到銷貨明細"));
         if (!salesId.equals(item.getSalesId())) throw new IllegalArgumentException("明細不屬於此銷貨單");
         itemRepository.delete(item);
+        recalculateAndSave(order);
+    }
+
+    private void recalculateAndSave(SalesOrder order) {
+        List<SalesOrderItem> items = itemRepository.findBySalesIdOrderBySortOrderAsc(order.getSalesId());
+        recalculateTotals(order, items);
+        salesOrderRepository.save(order);
+    }
+
+    private void recalculateTotals(SalesOrder order, List<SalesOrderItem> items) {
+        BigDecimal subtotal = BigDecimal.ZERO;
+        int totalQuantity = 0;
+        for (SalesOrderItem item : items) {
+            BigDecimal amount = item.getAmount() == null ? BigDecimal.ZERO : item.getAmount();
+            subtotal = subtotal.add(amount);
+            totalQuantity += item.getQuantity() == null ? 0 : item.getQuantity();
+        }
+        BigDecimal tax = Boolean.TRUE.equals(order.getTaxEnabled())
+                ? subtotal.multiply(order.getTaxRate()).setScale(0, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+        order.setSubtotalAmount(subtotal);
+        order.setTaxAmount(tax);
+        order.setTotalAmount(subtotal.add(tax));
+        order.setTotalQuantity(totalQuantity);
     }
 
     @Transactional

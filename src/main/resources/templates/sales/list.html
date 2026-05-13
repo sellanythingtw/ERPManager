@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>銷貨單列表</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="app">
+    <div th:replace="~{fragments :: sidebar('sales')}"></div>
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <h1>銷貨單列表</h1>
+                <div class="subtitle">可查看草稿與已確認銷貨單，草稿可繼續刷條碼加入明細。</div>
+            </div>
+            <div><a class="btn btn-primary" href="/sales/new">新增銷貨單</a></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">銷貨單資料</div>
+            <div class="card-body">
+                <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
+                <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>銷貨單號</th>
+                        <th>單據日期</th>
+                        <th>銷貨日期</th>
+                        <th>客戶</th>
+                        <th>狀態</th>
+                        <th>付款</th>
+                        <th>總數量</th>
+                        <th>總金額</th>
+                        <th>PDF</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="order : ${orders}">
+                        <td th:text="${order.salesNo}"></td>
+                        <td th:text="${order.documentDate}"></td>
+                        <td th:text="${order.salesDate}"></td>
+                        <td>
+                            <span th:each="c : ${customers}" th:if="${c.customerId == order.customerId}" th:text="${c.customerName}"></span>
+                            <span th:if="${order.customerId == null}">未指定</span>
+                        </td>
+                        <td><span class="badge" th:classappend="${order.status == 'CONFIRMED'} ? ' badge-success' : ' badge-warning'" th:text="${order.status == 'CONFIRMED' ? '已確認' : '草稿'}"></span></td>
+                        <td th:text="${order.paymentType ?: '-'}"></td>
+                        <td th:text="${order.totalQuantity}"></td>
+                        <td th:text="${order.totalAmount}"></td>
+                        <td>
+                            <a th:if="${order.pdfPath != null}" th:href="@{/local-file(path=${order.pdfPath})}" target="_blank">開啟</a>
+                            <span th:if="${order.pdfPath == null}">-</span>
+                        </td>
+                        <td><a class="btn btn-outline" th:href="@{'/sales/' + ${order.salesId}}">查看 / 編輯</a></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(orders)}"><td colspan="10">尚無銷貨單資料</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

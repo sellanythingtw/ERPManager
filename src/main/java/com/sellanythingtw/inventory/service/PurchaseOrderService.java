@@ -56,7 +56,13 @@ public class PurchaseOrderService {
         order.setDocumentDate(today);
         order.setPurchaseDate(purchaseDate == null ? today : purchaseDate);
         order.setSupplierId(supplierId);
+        order.setStatus("DRAFT");
+        recalculateTotals(order, List.of());
         return purchaseOrderRepository.save(order);
+    }
+
+    public List<PurchaseOrder> listAll() {
+        return purchaseOrderRepository.findAllByOrderByCreatedAtDesc();
     }
 
     public PurchaseOrder getOrder(Long purchaseId) {
@@ -113,7 +119,9 @@ public class PurchaseOrderService {
         item.setQuantity(quantity);
         item.setAmount(unitCost.multiply(BigDecimal.valueOf(quantity)));
         item.setSortOrder(itemRepository.findByPurchaseIdOrderBySortOrderAsc(purchaseId).size() + 1);
-        return itemRepository.save(item);
+        PurchaseOrderItem saved = itemRepository.save(item);
+        recalculateAndSave(order);
+        return saved;
     }
 
     @Transactional
@@ -124,6 +132,7 @@ public class PurchaseOrderService {
                 .orElseThrow(() -> new IllegalArgumentException("找不到進貨明細"));
         if (!purchaseId.equals(item.getPurchaseId())) throw new IllegalArgumentException("明細不屬於此進貨單");
         itemRepository.delete(item);
+        recalculateAndSave(order);
     }
 
     @Transactional
@@ -201,6 +210,30 @@ public class PurchaseOrderService {
         order = purchaseOrderRepository.save(order);
         cloudSyncService.uploadPdfIfEnabled("PURCHASE", order.getPurchaseId(), pdfPath, supplier == null ? "未指定供應商" : supplier.getSupplierName());
         return order;
+    }
+
+    private void recalculateAndSave(PurchaseOrder order) {
+        List<PurchaseOrderItem> items = itemRepository.findByPurchaseIdOrderBySortOrderAsc(order.getPurchaseId());
+        recalculateTotals(order, items);
+        purchaseOrderRepository.save(order);
+    }
+
+    private void recalculateTotals(PurchaseOrder order, List<PurchaseOrderItem> items) {
+        BigDecimal subtotal = BigDecimal.ZERO;
+        int totalQuantity = 0;
+        for (PurchaseOrderItem item : items) {
+            BigDecimal price = item.getWholesalePrice() == null ? BigDecimal.ZERO : item.getWholesalePrice();
+            Integer qty = item.getQuantity() == null ? 0 : item.getQuantity();
+            subtotal = subtotal.add(price.multiply(BigDecimal.valueOf(qty)));
+            totalQuantity += qty;
+        }
+        BigDecimal tax = Boolean.TRUE.equals(order.getTaxEnabled())
+                ? subtotal.multiply(order.getTaxRate()).setScale(0, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+        order.setSubtotalAmount(subtotal);
+        order.setTaxAmount(tax);
+        order.setTotalAmount(subtotal.add(tax));
+        order.setTotalQuantity(totalQuantity);
     }
 
     public List<PurchaseLot> listLots(Long purchaseId) {

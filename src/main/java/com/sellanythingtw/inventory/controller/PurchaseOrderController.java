@@ -10,6 +10,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.util.UriUtils;
+
+import java.nio.charset.StandardCharsets;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -32,6 +35,13 @@ public class PurchaseOrderController {
         this.productRepository = productRepository;
     }
 
+    @GetMapping("/purchases")
+    public String list(Model model) {
+        model.addAttribute("orders", purchaseOrderService.listAll());
+        model.addAttribute("suppliers", supplierRepository.findAll());
+        return "purchase/list";
+    }
+
     @GetMapping("/purchases/new")
     public String newPurchase(Model model) {
         model.addAttribute("suppliers", supplierRepository.findAll());
@@ -48,8 +58,16 @@ public class PurchaseOrderController {
 
     @PostMapping("/purchases/draft")
     public String createDraftPage(@RequestParam(required = false) Long supplierId,
-                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate purchaseDate) {
-        return "redirect:/purchases/" + purchaseOrderService.createDraft(supplierId, purchaseDate).getPurchaseId();
+                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate purchaseDate,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            Long id = purchaseOrderService.createDraft(supplierId, purchaseDate).getPurchaseId();
+            redirectAttributes.addFlashAttribute("successMessage", "進貨單草稿已建立，可先存放於列表，之後再回來編輯或確認。");
+            return "redirect:/purchases/" + id;
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/purchases/new";
+        }
     }
 
     @PostMapping("/purchases/{purchaseId}/items")
@@ -59,20 +77,36 @@ public class PurchaseOrderController {
                               @RequestParam(defaultValue = "0") BigDecimal salePrice,
                               @RequestParam(required = false) String trayQuantityCode,
                               @RequestParam(required = false) String sizeCode,
-                              @RequestParam Integer quantity) {
-        purchaseOrderService.addItem(purchaseId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity);
+                              @RequestParam Integer quantity,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            purchaseOrderService.addItem(purchaseId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity);
+            redirectAttributes.addFlashAttribute("successMessage", "進貨明細已儲存至草稿。");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
         return "redirect:/purchases/" + purchaseId;
     }
 
     @PostMapping("/purchases/{purchaseId}/items/{itemId}/delete")
-    public String deleteItemPage(@PathVariable Long purchaseId, @PathVariable Long itemId) {
-        purchaseOrderService.deleteItem(purchaseId, itemId);
+    public String deleteItemPage(@PathVariable Long purchaseId, @PathVariable Long itemId, RedirectAttributes redirectAttributes) {
+        try {
+            purchaseOrderService.deleteItem(purchaseId, itemId);
+            redirectAttributes.addFlashAttribute("successMessage", "進貨明細已刪除。");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
         return "redirect:/purchases/" + purchaseId;
     }
 
     @PostMapping("/purchases/{purchaseId}/confirm")
-    public String confirmPage(@PathVariable Long purchaseId) {
-        purchaseOrderService.confirm(purchaseId);
+    public String confirmPage(@PathVariable Long purchaseId, RedirectAttributes redirectAttributes) {
+        try {
+            purchaseOrderService.confirm(purchaseId);
+            redirectAttributes.addFlashAttribute("successMessage", "進貨單已確認，已建立批次條碼與入庫紀錄。");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
         return "redirect:/purchases/" + purchaseId;
     }
 
@@ -81,12 +115,12 @@ public class PurchaseOrderController {
                                   @RequestParam Long purchaseId,
                                   RedirectAttributes redirectAttributes) {
         try {
-            labelPrintService.createLotLabelPdf(lotId);
-            redirectAttributes.addFlashAttribute("successMessage", "單一貼紙 PDF 已產生");
-        } catch (IllegalArgumentException ex) {
+            String path = labelPrintService.createLotLabelPdf(lotId);
+            return redirectLocalFile(path);
+        } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/purchases/" + purchaseId;
         }
-        return "redirect:/purchases/" + purchaseId;
     }
 
     @PostMapping("/labels/purchases/{purchaseId}/batch")
@@ -94,12 +128,12 @@ public class PurchaseOrderController {
                                            @RequestParam(defaultValue = "1") Integer copies,
                                            RedirectAttributes redirectAttributes) {
         try {
-            labelPrintService.createPurchaseLabelsPdf(purchaseId, copies);
-            redirectAttributes.addFlashAttribute("successMessage", "整張進貨單貼紙 PDF 已產生");
-        } catch (IllegalArgumentException ex) {
+            String path = labelPrintService.createPurchaseLabelsPdf(purchaseId, copies);
+            return redirectLocalFile(path);
+        } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/purchases/" + purchaseId;
         }
-        return "redirect:/purchases/" + purchaseId;
     }
 
     @PostMapping("/api/purchases/draft")
@@ -138,7 +172,7 @@ public class PurchaseOrderController {
     public Map<String, Object> createLabel(@PathVariable Long lotId) {
         try {
             return ApiResult.ok("標籤 PDF 已產生", "path", labelPrintService.createLotLabelPdf(lotId));
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
             return ApiResult.fail(ex.getMessage());
         }
     }
@@ -149,9 +183,13 @@ public class PurchaseOrderController {
                                                     @RequestParam(defaultValue = "1") Integer copies) {
         try {
             return ApiResult.ok("整張進貨單貼紙 PDF 已產生", "path", labelPrintService.createPurchaseLabelsPdf(purchaseId, copies));
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
             return ApiResult.fail(ex.getMessage());
         }
     }
 
+
+    private String redirectLocalFile(String path) {
+        return "redirect:/local-file?path=" + UriUtils.encodeQueryParam(path, StandardCharsets.UTF_8);
+    }
 }

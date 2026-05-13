@@ -14,7 +14,7 @@
                 <h1>銷貨單明細</h1>
                 <div class="subtitle">刷入進貨貼紙條碼，輸入數量，確認後扣除對應批次庫存。</div>
             </div>
-            <div><a class="btn btn-outline" href="/sales/new">新增銷貨單</a></div>
+            <div><a class="btn btn-outline" href="/sales">銷貨單列表</a> <a class="btn btn-primary" href="/sales/new">新增銷貨單</a></div>
         </div>
 
         <div class="card">
@@ -28,6 +28,9 @@
                 </div>
             </div>
         </div>
+
+        <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
+        <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
         <div class="card" th:if="${order.status == 'DRAFT'}">
             <div class="card-header">條碼掃描輸入</div>
@@ -80,6 +83,12 @@
                     <tr th:if="${#lists.isEmpty(items)}"><td colspan="11">尚未新增明細</td></tr>
                     </tbody>
                 </table>
+                <div class="grid grid-4" style="margin-top:16px;">
+                    <div><label>總數量</label><input th:value="${order.totalQuantity}" readonly></div>
+                    <div><label>未稅總額</label><input th:value="${order.subtotalAmount}" readonly></div>
+                    <div><label>稅額</label><input th:value="${order.taxAmount}" readonly></div>
+                    <div><label>總金額</label><input th:value="${order.totalAmount}" readonly></div>
+                </div>
             </div>
         </div>
 
