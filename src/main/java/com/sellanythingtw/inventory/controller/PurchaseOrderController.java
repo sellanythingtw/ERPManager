@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriUtils;
 
-import java.nio.charset.StandardCharsets;
-
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -45,15 +45,49 @@ public class PurchaseOrderController {
     @GetMapping("/purchases/new")
     public String newPurchase(Model model) {
         model.addAttribute("suppliers", supplierRepository.findAll());
+        model.addAttribute("products", productRepository.findAll());
+        model.addAttribute("labelTemplates", labelPrintService.listTemplates());
+        model.addAttribute("today", LocalDate.now());
         return "purchase/new";
     }
 
     @GetMapping("/purchases/{purchaseId}")
-    public String detail(@PathVariable Long purchaseId, Model model) {
+    public String detail(@PathVariable Long purchaseId,
+                         @RequestParam(defaultValue = "false") boolean edit,
+                         Model model) {
         Map<String, Object> detail = purchaseOrderService.getDetail(purchaseId);
         model.addAllAttributes(detail);
         model.addAttribute("products", productRepository.findAll());
+        model.addAttribute("suppliers", supplierRepository.findAll());
+        model.addAttribute("labelTemplates", labelPrintService.listTemplates());
+        model.addAttribute("editMode", edit);
         return "purchase/detail";
+    }
+
+    @PostMapping("/purchases/create-full")
+    public String createFullPage(@RequestParam(required = false) Long supplierId,
+                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate purchaseDate,
+                                 @RequestParam(required = false) Boolean taxEnabled,
+                                 @RequestParam(required = false) String note,
+                                 @RequestParam(required = false) Long productId,
+                                 @RequestParam(defaultValue = "0") BigDecimal wholesalePrice,
+                                 @RequestParam(defaultValue = "0") BigDecimal salePrice,
+                                 @RequestParam(required = false) String trayQuantityCode,
+                                 @RequestParam(required = false) String sizeCode,
+                                 @RequestParam(required = false) Integer quantity,
+                                 @RequestParam(required = false) Long labelSettingId,
+                                 @RequestParam(defaultValue = "draft") String action,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            boolean confirm = "confirm".equals(action);
+            Long id = purchaseOrderService.createWithFirstItem(supplierId, purchaseDate, taxEnabled, note,
+                    productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId, confirm).getPurchaseId();
+            redirectAttributes.addFlashAttribute("successMessage", confirm ? "進貨單已建立並確認。" : "進貨單草稿已建立。仍可點擊編輯繼續修改。");
+            return "redirect:/purchases/" + id;
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/purchases/new";
+        }
     }
 
     @PostMapping("/purchases/draft")
@@ -63,11 +97,61 @@ public class PurchaseOrderController {
         try {
             Long id = purchaseOrderService.createDraft(supplierId, purchaseDate).getPurchaseId();
             redirectAttributes.addFlashAttribute("successMessage", "進貨單草稿已建立，可先存放於列表，之後再回來編輯或確認。");
-            return "redirect:/purchases/" + id;
+            return "redirect:/purchases/" + id + "?edit=true";
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/purchases/new";
         }
+    }
+
+    @PostMapping("/purchases/{purchaseId}/save-full")
+    public String saveFullPage(@PathVariable Long purchaseId,
+                               @RequestParam(required = false) Long supplierId,
+                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate purchaseDate,
+                               @RequestParam(required = false) Boolean taxEnabled,
+                               @RequestParam(required = false) String note,
+                               @RequestParam(required = false) List<Long> itemId,
+                               @RequestParam(required = false) List<Long> productId,
+                               @RequestParam(required = false) List<BigDecimal> wholesalePrice,
+                               @RequestParam(required = false) List<BigDecimal> salePrice,
+                               @RequestParam(required = false) List<String> trayQuantityCode,
+                               @RequestParam(required = false) List<String> sizeCode,
+                               @RequestParam(required = false) List<Integer> quantity,
+                               @RequestParam(required = false) List<Long> labelSettingId,
+                               @RequestParam(required = false) Long newProductId,
+                               @RequestParam(defaultValue = "0") BigDecimal newWholesalePrice,
+                               @RequestParam(defaultValue = "0") BigDecimal newSalePrice,
+                               @RequestParam(required = false) String newTrayQuantityCode,
+                               @RequestParam(required = false) String newSizeCode,
+                               @RequestParam(required = false) Integer newQuantity,
+                               @RequestParam(required = false) Long newLabelSettingId,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            purchaseOrderService.saveFullForm(purchaseId, supplierId, purchaseDate, taxEnabled, note,
+                    itemId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId,
+                    newProductId, newWholesalePrice, newSalePrice, newTrayQuantityCode, newSizeCode, newQuantity, newLabelSettingId);
+            redirectAttributes.addFlashAttribute("successMessage", "進貨單已儲存。若為已確認單據，PDF 與進貨貼紙已自動更新。");
+            return "redirect:/purchases/" + purchaseId;
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/purchases/" + purchaseId + "?edit=true";
+        }
+    }
+
+    @PostMapping("/purchases/{purchaseId}/header")
+    public String updateHeaderPage(@PathVariable Long purchaseId,
+                                   @RequestParam(required = false) Long supplierId,
+                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate purchaseDate,
+                                   @RequestParam(required = false) Boolean taxEnabled,
+                                   @RequestParam(required = false) String note,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            purchaseOrderService.updateDraftHeader(purchaseId, supplierId, purchaseDate, taxEnabled, note);
+            redirectAttributes.addFlashAttribute("successMessage", "進貨單表頭已更新。若為已確認單據，已同步批次資料並重新產生 PDF 與貼紙。");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/purchases/" + purchaseId;
     }
 
     @PostMapping("/purchases/{purchaseId}/items")
@@ -78,10 +162,31 @@ public class PurchaseOrderController {
                               @RequestParam(required = false) String trayQuantityCode,
                               @RequestParam(required = false) String sizeCode,
                               @RequestParam Integer quantity,
+                              @RequestParam(required = false) Long labelSettingId,
                               RedirectAttributes redirectAttributes) {
         try {
-            purchaseOrderService.addItem(purchaseId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity);
+            purchaseOrderService.addItem(purchaseId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId);
             redirectAttributes.addFlashAttribute("successMessage", "進貨明細已儲存至草稿。");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/purchases/" + purchaseId + "?edit=true";
+    }
+
+    @PostMapping("/purchases/{purchaseId}/items/{itemId}/update")
+    public String updateItemPage(@PathVariable Long purchaseId,
+                                 @PathVariable Long itemId,
+                                 @RequestParam Long productId,
+                                 @RequestParam(defaultValue = "0") BigDecimal wholesalePrice,
+                                 @RequestParam(defaultValue = "0") BigDecimal salePrice,
+                                 @RequestParam(required = false) String trayQuantityCode,
+                                 @RequestParam(required = false) String sizeCode,
+                                 @RequestParam Integer quantity,
+                                 @RequestParam(required = false) Long labelSettingId,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            purchaseOrderService.updateItem(purchaseId, itemId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId);
+            redirectAttributes.addFlashAttribute("successMessage", "進貨明細已更新。若為已確認單據，已同步批次、庫存入庫紀錄並重新產生 PDF 與貼紙。");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }
@@ -96,14 +201,48 @@ public class PurchaseOrderController {
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }
-        return "redirect:/purchases/" + purchaseId;
+        return "redirect:/purchases/" + purchaseId + "?edit=true";
     }
 
     @PostMapping("/purchases/{purchaseId}/confirm")
     public String confirmPage(@PathVariable Long purchaseId, RedirectAttributes redirectAttributes) {
         try {
             purchaseOrderService.confirm(purchaseId);
-            redirectAttributes.addFlashAttribute("successMessage", "進貨單已確認，已建立批次條碼與入庫紀錄。");
+            redirectAttributes.addFlashAttribute("successMessage", "進貨單已確認，已建立批次條碼、入庫紀錄、PDF 與貼紙。");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/purchases/" + purchaseId;
+    }
+
+    @PostMapping("/purchases/{purchaseId}/delete-draft")
+    public String deleteDraftPage(@PathVariable Long purchaseId, RedirectAttributes redirectAttributes) {
+        try {
+            purchaseOrderService.deleteDraft(purchaseId);
+            redirectAttributes.addFlashAttribute("successMessage", "進貨草稿已刪除。");
+            return "redirect:/purchases";
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/purchases/" + purchaseId;
+        }
+    }
+
+    @PostMapping("/purchases/{purchaseId}/void")
+    public String voidPage(@PathVariable Long purchaseId, RedirectAttributes redirectAttributes) {
+        try {
+            purchaseOrderService.voidOrder(purchaseId);
+            redirectAttributes.addFlashAttribute("successMessage", "進貨單已作廢，可於單據頁恢復。");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/purchases/" + purchaseId;
+    }
+
+    @PostMapping("/purchases/{purchaseId}/restore")
+    public String restorePage(@PathVariable Long purchaseId, RedirectAttributes redirectAttributes) {
+        try {
+            purchaseOrderService.restoreOrder(purchaseId);
+            redirectAttributes.addFlashAttribute("successMessage", "進貨單已恢復。");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }
@@ -116,19 +255,6 @@ public class PurchaseOrderController {
                                   RedirectAttributes redirectAttributes) {
         try {
             String path = labelPrintService.createLotLabelPdf(lotId);
-            return redirectLocalFile(path);
-        } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-            return "redirect:/purchases/" + purchaseId;
-        }
-    }
-
-    @PostMapping("/labels/purchases/{purchaseId}/batch")
-    public String createPurchaseLabelsPage(@PathVariable Long purchaseId,
-                                           @RequestParam(defaultValue = "1") Integer copies,
-                                           RedirectAttributes redirectAttributes) {
-        try {
-            String path = labelPrintService.createPurchaseLabelsPdf(purchaseId, copies);
             return redirectLocalFile(path);
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
@@ -151,8 +277,9 @@ public class PurchaseOrderController {
                                        @RequestParam(defaultValue = "0") BigDecimal salePrice,
                                        @RequestParam(required = false) String trayQuantityCode,
                                        @RequestParam(required = false) String sizeCode,
-                                       @RequestParam Integer quantity) {
-        return ApiResult.ok("進貨明細已加入", "data", purchaseOrderService.addItem(purchaseId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity));
+                                       @RequestParam Integer quantity,
+                                       @RequestParam(required = false) Long labelSettingId) {
+        return ApiResult.ok("進貨明細已加入", "data", purchaseOrderService.addItem(purchaseId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId));
     }
 
     @PostMapping("/api/purchases/{purchaseId}/confirm")
@@ -176,18 +303,6 @@ public class PurchaseOrderController {
             return ApiResult.fail(ex.getMessage());
         }
     }
-
-    @PostMapping("/api/labels/purchases/{purchaseId}/batch")
-    @ResponseBody
-    public Map<String, Object> createPurchaseLabels(@PathVariable Long purchaseId,
-                                                    @RequestParam(defaultValue = "1") Integer copies) {
-        try {
-            return ApiResult.ok("整張進貨單貼紙 PDF 已產生", "path", labelPrintService.createPurchaseLabelsPdf(purchaseId, copies));
-        } catch (Exception ex) {
-            return ApiResult.fail(ex.getMessage());
-        }
-    }
-
 
     private String redirectLocalFile(String path) {
         return "redirect:/local-file?path=" + UriUtils.encodeQueryParam(path, StandardCharsets.UTF_8);

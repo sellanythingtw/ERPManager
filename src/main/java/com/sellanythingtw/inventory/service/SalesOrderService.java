@@ -164,6 +164,31 @@ public class SalesOrderService {
     }
 
     @Transactional
+    public void deleteDraft(Long salesId) {
+        SalesOrder order = getOrder(salesId);
+        if (!"DRAFT".equals(order.getStatus())) throw new IllegalStateException("只有草稿單據可以刪除");
+        itemRepository.findBySalesIdOrderBySortOrderAsc(salesId).forEach(itemRepository::delete);
+        salesOrderRepository.delete(order);
+    }
+
+    @Transactional
+    public SalesOrder voidOrder(Long salesId) {
+        SalesOrder order = getOrder(salesId);
+        if ("VOID".equals(order.getStatus())) return order;
+        if ("DRAFT".equals(order.getStatus())) throw new IllegalStateException("草稿請使用刪除草稿，不需作廢");
+        order.setStatus("VOID");
+        return salesOrderRepository.save(order);
+    }
+
+    @Transactional
+    public SalesOrder restoreOrder(Long salesId) {
+        SalesOrder order = getOrder(salesId);
+        if (!"VOID".equals(order.getStatus())) return order;
+        order.setStatus("CONFIRMED");
+        return salesOrderRepository.save(order);
+    }
+
+    @Transactional
     public SalesOrder confirm(Long salesId, String paymentType) {
         SalesOrder order = salesOrderRepository.findById(salesId)
                 .orElseThrow(() -> new IllegalArgumentException("找不到銷貨單"));

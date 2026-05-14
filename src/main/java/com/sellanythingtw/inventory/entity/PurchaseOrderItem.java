@@ -23,6 +23,7 @@ public class PurchaseOrderItem {
     private Integer quantity = 0;
     private BigDecimal amount = BigDecimal.ZERO;
     private Integer sortOrder = 0;
+    private Long labelSettingId;
 
     public Long getItemId() { return itemId; }
     public void setItemId(Long itemId) { this.itemId = itemId; }
@@ -56,4 +57,6 @@ public class PurchaseOrderItem {
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public Integer getSortOrder() { return sortOrder; }
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
+    public Long getLabelSettingId() { return labelSettingId; }
+    public void setLabelSettingId(Long labelSettingId) { this.labelSettingId = labelSettingId; }
 }

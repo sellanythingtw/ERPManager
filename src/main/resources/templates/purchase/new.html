@@ -12,38 +12,83 @@
         <div class="topbar">
             <div>
                 <h1>新增進貨單</h1>
-                <div class="subtitle">先存為草稿，再進入明細頁新增進貨品項；草稿會保留在進貨單列表中。</div>
+                <div class="subtitle">直接進入完整表單；供應商與品項可先空白，儲存草稿後留在進貨單列表。</div>
             </div>
-            <div><a class="btn btn-outline" href="/purchases">返回進貨單列表</a></div>
+            <div class="actions"><a class="btn btn-outline" href="/purchases">返回進貨單列表</a></div>
         </div>
+        <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
-        <div class="card">
-            <div class="card-header">建立進貨草稿</div>
-            <div class="card-body">
-                <form method="post" action="/purchases/draft">
-                    <div class="grid grid-3">
+        <form method="post" action="/purchases/create-full">
+            <div class="card">
+                <div class="card-header">單據表頭</div>
+                <div class="card-body">
+                    <div class="grid grid-4">
+                        <div><label>進貨日期</label><input type="date" name="purchaseDate" th:value="${#temporals.format(today, 'yyyy-MM-dd')}"></div>
                         <div>
                             <label>供應商</label>
-                            <select name="supplierId" required>
-                                <option value="">請選擇供應商</option>
-                                <option th:each="s : ${suppliers}" th:value="${s.supplierId}" th:text="${s.supplierCode + '｜' + s.supplierName}"></option>
+                            <select name="supplierId" class="refresh-on-focus">
+                                <option value="">未指定，稍後再選</option>
+                                <option th:each="s : ${suppliers}" th:value="${s.supplierId}" th:text="${s.supplierName}"></option>
+                                <option value="__new__">＋ 新增供應商...</option>
                             </select>
                         </div>
-                        <div>
-                            <label>進貨日期</label>
-                            <input name="purchaseDate" type="date">
-                        </div>
-                        <div style="display:flex;align-items:end;">
-                            <button class="btn-primary" type="submit">存為草稿並進入明細</button>
-                        </div>
+                        <div><label>是否計稅</label><select name="taxEnabled"><option value="false">否</option><option value="true">是，5%</option></select></div>
+                        <div><label>備註</label><input name="note" placeholder="可輸入備註"></div>
                     </div>
-                </form>
-                <div class="alert alert-info">
-                    若尚未建立供應商或產品，請先到「供應商管理」與「商品管理」建檔。
                 </div>
             </div>
-        </div>
+
+            <div class="card">
+                <div class="card-header">進貨品項</div>
+                <div class="card-body">
+                    <div class="alert alert-info">可先不選品項直接儲存草稿；若下拉選單資料不足，可於新分頁新增後回到此頁重新整理。</div>
+                    <div class="grid grid-4">
+                        <div>
+                            <label>產品</label>
+                            <select name="productId" class="refresh-on-focus">
+                                <option value="">不新增品項，稍後再加</option>
+                                <option th:each="p : ${products}" th:value="${p.productId}" th:text="${p.productCode + '｜' + p.productName + '｜' + (p.productAlias ?: '')}"></option>
+                                <option value="__new__">＋ 新增產品...</option>
+                            </select>
+                        </div>
+                        <div><label>批發價</label><input name="wholesalePrice" type="number" step="1" value="0"></div>
+                        <div><label>銷售價</label><input name="salePrice" type="number" step="1" value="0"></div>
+                        <div><label>數量</label><input name="quantity" type="number" min="1" value="1"></div>
+                    </div>
+                    <div class="grid grid-4" style="margin-top:14px;">
+                        <div><label>P</label><input name="trayQuantityCode" placeholder="例如 P15"></div>
+                        <div><label>尺寸</label><input name="sizeCode" placeholder="例如 K0"></div>
+                        <div>
+                            <label>貼紙範本</label>
+                            <select name="labelSettingId" class="refresh-on-focus">
+                                <option th:each="tpl : ${labelTemplates}" th:value="${tpl.settingId}" th:text="${tpl.templateName + (tpl.defaultTemplate ? '（預設）' : '')}"></option>
+                                <option value="__new__">＋ 新增進貨貼紙範本...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn-primary" name="action" value="draft" type="submit">儲存草稿</button>
+                <button class="btn-outline" name="action" value="confirm" type="submit" onclick="return confirm('確認進貨後會建立批次、條碼並增加庫存，是否繼續？')">儲存並確認進貨</button>
+            </div>
+        </form>
     </main>
 </div>
+<script>
+function handleSpecialSelect(select){
+  select.addEventListener('change', function(){
+    if (this.value === '__new__') {
+      const name = this.getAttribute('name');
+      if (name === 'supplierId') window.open('/suppliers', '_blank');
+      if (name === 'productId') window.open('/products', '_blank');
+      if (name === 'labelSettingId') window.open('/settings/label-templates', '_blank');
+      this.value='';
+    }
+  });
+}
+document.querySelectorAll('select').forEach(handleSpecialSelect);
+</script>
 </body>
 </html>

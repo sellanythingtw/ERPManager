@@ -8,11 +8,10 @@ import com.sellanythingtw.inventory.repository.PurchaseLotRepository;
 import com.sellanythingtw.inventory.utils.BarcodeUtils;
 import com.sellanythingtw.inventory.utils.FilesUtils;
 import com.lowagie.text.Document;
-import com.lowagie.text.Font;
 import com.lowagie.text.Image;
-import com.lowagie.text.Paragraph;
 import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.BaseFont;
+import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfWriter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,13 +39,46 @@ public class LabelPrintService {
     }
 
     public LabelPrintSetting getSetting() {
-        return settingRepository.findAll().stream().findFirst()
-                .orElseGet(() -> settingRepository.save(new LabelPrintSetting()));
+        return getDefaultTemplate();
+    }
+
+    public LabelPrintSetting getDefaultTemplate() {
+        return settingRepository.findFirstByDefaultTemplateTrueOrderBySettingIdAsc()
+                .orElseGet(() -> settingRepository.findAllByOrderByDefaultTemplateDescSettingIdAsc().stream().findFirst()
+                        .map(existing -> {
+                            existing.setDefaultTemplate(true);
+                            return settingRepository.save(existing);
+                        })
+                        .orElseGet(() -> {
+                            LabelPrintSetting setting = new LabelPrintSetting();
+                            setting.setTemplateName("預設進貨貼紙");
+                            setting.setDefaultTemplate(true);
+                            return settingRepository.save(setting);
+                        }));
+    }
+
+    public List<LabelPrintSetting> listTemplates() {
+        getDefaultTemplate();
+        return settingRepository.findAllByOrderByDefaultTemplateDescSettingIdAsc();
+    }
+
+    public LabelPrintSetting getTemplate(Long settingId) {
+        if (settingId == null) return getDefaultTemplate();
+        return settingRepository.findById(settingId).orElseGet(this::getDefaultTemplate);
+    }
+
+    @Transactional
+    public LabelPrintSetting createTemplate() {
+        LabelPrintSetting setting = new LabelPrintSetting();
+        setting.setTemplateName("進貨貼紙範本 " + (settingRepository.count() + 1));
+        setting.setDefaultTemplate(settingRepository.count() == 0);
+        return settingRepository.save(setting);
     }
 
     @Transactional
     public LabelPrintSetting updateSetting(LabelPrintSetting form) {
-        LabelPrintSetting setting = getSetting();
+        LabelPrintSetting setting = form.getSettingId() == null ? getDefaultTemplate() : getTemplate(form.getSettingId());
+        setting.setTemplateName(blankToDefault(form.getTemplateName(), "未命名範本"));
         setting.setLabelWidthMm(form.getLabelWidthMm());
         setting.setLabelHeightMm(form.getLabelHeightMm());
         setting.setMarginTopMm(form.getMarginTopMm());
@@ -56,17 +88,34 @@ public class LabelPrintService {
         setting.setBarcodeWidthMm(form.getBarcodeWidthMm());
         setting.setBarcodeHeightMm(form.getBarcodeHeightMm());
         setting.setShowBorder(Boolean.TRUE.equals(form.getShowBorder()));
+        if (Boolean.TRUE.equals(form.getDefaultTemplate())) {
+            for (LabelPrintSetting existing : settingRepository.findAll()) {
+                existing.setDefaultTemplate(false);
+                settingRepository.save(existing);
+            }
+            setting.setDefaultTemplate(true);
+        } else if (setting.getDefaultTemplate() == null) {
+            setting.setDefaultTemplate(false);
+        }
         return settingRepository.save(setting);
+    }
+
+    @Transactional
+    public void deleteTemplate(Long settingId) {
+        LabelPrintSetting setting = getTemplate(settingId);
+        if (Boolean.TRUE.equals(setting.getDefaultTemplate())) {
+            throw new IllegalArgumentException("預設範本不可刪除，請先指定其他範本為預設");
+        }
+        settingRepository.delete(setting);
     }
 
     @Transactional
     public String createLotLabelPdf(Long lotId) {
         PurchaseLot lot = lotRepository.findById(lotId)
                 .orElseThrow(() -> new IllegalArgumentException("找不到進貨批次"));
-        LabelPrintSetting setting = getSetting();
-        Path path = Path.of(appProperties.getLabelDir(), "purchase", lot.getBarcodeValue() + ".pdf");
+        Path path = Path.of(appProperties.getLabelDir(), "purchase", lot.getBarcodeValue() + "_" + LocalDateTime.now().format(TS) + ".pdf");
         FilesUtils.createFolder(path.getParent().toString());
-        writeLabels(path, List.of(lot), setting, 1);
+        writeLabels(path, List.of(lot), 1);
         lot.setLabelPrintedCount(safe(lot.getLabelPrintedCount()) + 1);
         lotRepository.save(lot);
         return path.toString();
@@ -77,33 +126,28 @@ public class LabelPrintService {
         int printCopies = copies == null || copies <= 0 ? 1 : copies;
         List<PurchaseLot> lots = lotRepository.findByPurchaseId(purchaseId);
         if (lots.isEmpty()) throw new IllegalArgumentException("此進貨單尚未建立批次，無法列印貼紙");
-        LabelPrintSetting setting = getSetting();
-        Path path = Path.of(appProperties.getLabelDir(), "purchase", "purchase_" + purchaseId + "_labels_" + LocalDateTime.now().format(TS) + ".pdf");
+        Path path = Path.of(appProperties.getLabelDir(), "purchase", "purchase_" + purchaseId + "_labels.pdf");
         FilesUtils.createFolder(path.getParent().toString());
-        writeLabels(path, lots, setting, printCopies);
-        for (PurchaseLot lot : lots) {
-            lot.setLabelPrintedCount(safe(lot.getLabelPrintedCount()) + printCopies);
-        }
-        lotRepository.saveAll(lots);
+        writeLabels(path, lots, printCopies);
         return path.toString();
     }
 
-    private void writeLabels(Path path, List<PurchaseLot> lots, LabelPrintSetting setting, int copies) {
+    private void writeLabels(Path path, List<PurchaseLot> lots, int copies) {
         try {
-            float width = mm(setting.getLabelWidthMm());
-            float height = mm(setting.getLabelHeightMm());
-            Document doc = new Document(new Rectangle(width, height), mm(1), mm(1), mm(1), mm(1));
-            PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+            LabelPrintSetting firstSetting = lots.isEmpty() ? getDefaultTemplate() : getTemplate(lots.get(0).getLabelSettingId());
+            Document doc = new Document(labelRectangle(firstSetting), 0, 0, 0, 0);
+            PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
             doc.open();
-            Font large = createFont(setting.getFontSizeLarge(), Font.BOLD);
-            Font normal = createFont(setting.getFontSizeNormal(), Font.NORMAL);
 
+            BaseFont font = createBaseFont();
             boolean firstPage = true;
             for (PurchaseLot lot : lots) {
+                LabelPrintSetting setting = getTemplate(lot.getLabelSettingId());
                 for (int i = 0; i < copies; i++) {
+                    doc.setPageSize(labelRectangle(setting));
                     if (!firstPage) doc.newPage();
                     firstPage = false;
-                    addLabelPage(doc, lot, setting, large, normal);
+                    drawLabel(writer, lot, setting, font);
                 }
             }
             doc.close();
@@ -112,31 +156,77 @@ public class LabelPrintService {
         }
     }
 
-    private void addLabelPage(Document doc, PurchaseLot lot, LabelPrintSetting setting, Font large, Font normal) throws Exception {
-        doc.add(new Paragraph(nvl(lot.getWholesalePrice()) + "        " + nvl(lot.getTrayQuantityCode()) + "   " + nvl(lot.getSizeCode()), large));
-        doc.add(new Paragraph(nvl(lot.getPurchaseDateCode()), normal));
-        doc.add(new Paragraph(nvl(lot.getProductName()), large));
-        doc.add(new Paragraph("新品" + nvl(lot.getSalePrice()) + "元 " + nvl(lot.getProductAlias()), normal));
-        doc.add(new Paragraph(nvl(lot.getSupplierCode()), normal));
-
-        byte[] barcodePng = BarcodeUtils.createCode128Png(lot.getBarcodeValue(), 360, 70);
-        Image image = Image.getInstance(barcodePng);
-        image.scaleToFit(mm(setting.getBarcodeWidthMm()), mm(setting.getBarcodeHeightMm()));
-        doc.add(image);
-        doc.add(new Paragraph(lot.getBarcodeValue(), normal));
+    private Rectangle labelRectangle(LabelPrintSetting setting) {
+        return new Rectangle(mm(setting.getLabelWidthMm()), mm(setting.getLabelHeightMm()));
     }
 
-    private Font createFont(Integer size, int style) {
-        int fontSize = size == null ? 9 : size;
+    private void drawLabel(PdfWriter writer, PurchaseLot lot, LabelPrintSetting setting, BaseFont font) throws Exception {
+        PdfContentByte cb = writer.getDirectContent();
+        float width = mm(setting.getLabelWidthMm());
+        float height = mm(setting.getLabelHeightMm());
+        float left = Math.max(mm(2.5), mm(setting.getMarginLeftMm()));
+        float right = width - Math.max(mm(2.5), mm(setting.getMarginLeftMm()));
+        float top = height - Math.max(mm(7.0), mm(setting.getMarginTopMm()) + mm(4.0));
+        float large = Math.min(safeFont(setting.getFontSizeLarge(), 11), 11);
+        float normal = Math.min(safeFont(setting.getFontSizeNormal(), 8), 8);
+        float small = Math.max(5.5f, normal - 1.2f);
+
+        if (Boolean.TRUE.equals(setting.getShowBorder())) {
+            cb.saveState();
+            cb.setLineWidth(0.4f);
+            cb.rectangle(mm(1.0), mm(1.0), width - mm(2.0), height - mm(2.0));
+            cb.stroke();
+            cb.restoreState();
+        }
+
+        drawText(cb, font, String.valueOf(nvl(lot.getWholesalePrice())), left, top, large, PdfContentByte.ALIGN_LEFT, 8);
+        drawText(cb, font, nvl(lot.getTrayQuantityCode()), width * 0.58f, top, normal + 1, PdfContentByte.ALIGN_LEFT, 8);
+        drawText(cb, font, nvl(lot.getSizeCode()).toUpperCase(), right, top, normal + 1, PdfContentByte.ALIGN_RIGHT, 8);
+        drawText(cb, font, nvl(lot.getPurchaseDateCode()), left, top - mm(5.0), normal, PdfContentByte.ALIGN_LEFT, 8);
+        drawText(cb, font, nvl(lot.getProductName()), left, top - mm(9.2), normal + 0.8f, PdfContentByte.ALIGN_LEFT, 18);
+        drawText(cb, font, "新品" + nvl(lot.getSalePrice()) + "元 " + nvl(lot.getProductAlias()), left, top - mm(13.0), normal, PdfContentByte.ALIGN_LEFT, 18);
+        drawText(cb, font, nvl(lot.getSupplierCode()), left, top - mm(16.8), normal, PdfContentByte.ALIGN_LEFT, 12);
+
+        float barcodeW = Math.min(mm(setting.getBarcodeWidthMm()), width - left - mm(3.0));
+        float barcodeH = Math.min(mm(setting.getBarcodeHeightMm()), Math.max(mm(5.5), height * 0.21f));
+        float barcodeX = left;
+        float barcodeY = mm(5.4);
+        byte[] barcodePng = BarcodeUtils.createCode128Png(lot.getBarcodeValue(), 520, 90);
+        Image image = Image.getInstance(barcodePng);
+        image.scaleToFit(barcodeW, barcodeH);
+        image.setAbsolutePosition(barcodeX, barcodeY);
+        cb.addImage(image);
+        drawText(cb, font, nvl(lot.getBarcodeValue()), barcodeX, mm(2.2), small, PdfContentByte.ALIGN_LEFT, 18);
+    }
+
+    private void drawText(PdfContentByte cb, BaseFont font, String text, float x, float y, float size, int align, int max) {
+        cb.beginText();
+        cb.setFontAndSize(font, size);
+        cb.showTextAligned(align, fitText(text, max), x, y, 0);
+        cb.endText();
+    }
+
+    private BaseFont createBaseFont() {
         try {
-            BaseFont bf = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
-            return new Font(bf, fontSize, style);
-        } catch (Exception ignored) {
-            return new Font(Font.HELVETICA, fontSize, style);
+            return BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
+        } catch (Exception ex) {
+            try {
+                return BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
+            } catch (Exception ignored) {
+                throw new RuntimeException("無法載入 PDF 字型");
+            }
         }
     }
 
-    private float mm(double value) { return (float) (value * 72.0 / 25.4); }
+    private float mm(Double value) { return (float) ((value == null ? 0.0 : value) * 72.0 / 25.4); }
     private String nvl(Object value) { return value == null ? "" : String.valueOf(value); }
     private int safe(Integer value) { return value == null ? 0 : value; }
+    private float safeFont(Integer value, int fallback) { return value == null || value <= 0 ? fallback : value; }
+    private String fitText(String value, int max) {
+        String text = value == null ? "" : value;
+        return text.length() <= max ? text : text.substring(0, max);
+    }
+    private String blankToDefault(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value.trim();
+    }
 }

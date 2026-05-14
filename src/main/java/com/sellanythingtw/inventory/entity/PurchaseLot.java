@@ -30,6 +30,7 @@ public class PurchaseLot {
     private Integer initialQuantity = 0;
     private Integer remainingQuantity = 0;
     private Integer labelPrintedCount = 0;
+    private Long labelSettingId;
     private String status = "ACTIVE";
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -77,6 +78,8 @@ public class PurchaseLot {
     public void setRemainingQuantity(Integer remainingQuantity) { this.remainingQuantity = remainingQuantity; }
     public Integer getLabelPrintedCount() { return labelPrintedCount; }
     public void setLabelPrintedCount(Integer labelPrintedCount) { this.labelPrintedCount = labelPrintedCount; }
+    public Long getLabelSettingId() { return labelSettingId; }
+    public void setLabelSettingId(Long labelSettingId) { this.labelSettingId = labelSettingId; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public LocalDateTime getCreatedAt() { return createdAt; }

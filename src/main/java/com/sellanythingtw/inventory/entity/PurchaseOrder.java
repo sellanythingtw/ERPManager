@@ -23,6 +23,7 @@ public class PurchaseOrder {
     private Integer totalQuantity = 0;
     private String status = "DRAFT";
     private String pdfPath;
+    private String labelPdfPath;
     private String cloudPdfUrl;
     private String cloudUploadStatus = "NOT_UPLOADED";
     @Column(length = 1000)
@@ -59,6 +60,8 @@ public class PurchaseOrder {
     public void setStatus(String status) { this.status = status; }
     public String getPdfPath() { return pdfPath; }
     public void setPdfPath(String pdfPath) { this.pdfPath = pdfPath; }
+    public String getLabelPdfPath() { return labelPdfPath; }
+    public void setLabelPdfPath(String labelPdfPath) { this.labelPdfPath = labelPdfPath; }
     public String getCloudPdfUrl() { return cloudPdfUrl; }
     public void setCloudPdfUrl(String cloudPdfUrl) { this.cloudPdfUrl = cloudPdfUrl; }
     public String getCloudUploadStatus() { return cloudUploadStatus; }

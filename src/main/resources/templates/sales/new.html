@@ -12,7 +12,7 @@
         <div class="topbar">
             <div>
                 <h1>新增銷貨單</h1>
-                <div class="subtitle">先存為草稿，再進入明細頁刷條碼加入品項；草稿會保留在銷貨單列表中。</div>
+                <div class="subtitle">直接建立銷貨草稿，日期預設今天；客戶可先空白，稍後於草稿中編輯。</div>
             </div>
             <div><a class="btn btn-outline" href="/sales">返回銷貨單列表</a></div>
         </div>
@@ -24,17 +24,17 @@
                     <div class="grid grid-3">
                         <div>
                             <label>客戶</label>
-                            <select name="customerId" required>
-                                <option value="">請選擇客戶</option>
+                            <select name="customerId">
+                                <option value="">未指定，稍後再選</option>
                                 <option th:each="c : ${customers}" th:value="${c.customerId}" th:text="${c.customerCode + '｜' + c.customerName}"></option>
                             </select>
                         </div>
                         <div>
                             <label>銷貨日期</label>
-                            <input name="salesDate" type="date">
+                            <input name="salesDate" type="date" th:value="${#temporals.format(today, 'yyyy-MM-dd')}">
                         </div>
                         <div style="display:flex;align-items:end;">
-                            <button class="btn-primary" type="submit">存為草稿並進入明細</button>
+                            <button class="btn-primary" type="submit">儲存草稿</button>
                         </div>
                     </div>
                 </form>

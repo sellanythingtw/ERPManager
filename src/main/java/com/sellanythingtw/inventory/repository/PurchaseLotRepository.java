@@ -8,5 +8,6 @@ import java.util.Optional;
 public interface PurchaseLotRepository extends JpaRepository<PurchaseLot, Long> {
     Optional<PurchaseLot> findByBarcodeValue(String barcodeValue);
     List<PurchaseLot> findByPurchaseId(Long purchaseId);
+    Optional<PurchaseLot> findByPurchaseItemId(Long purchaseItemId);
     List<PurchaseLot> findByProductIdAndStatus(Long productId, String status);
 }

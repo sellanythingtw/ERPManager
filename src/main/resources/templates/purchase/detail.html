@@ -12,136 +12,180 @@
         <div class="topbar">
             <div>
                 <h1>進貨單明細</h1>
-                <div class="subtitle">確認進貨後會建立進貨批次、條碼與庫存入庫異動。</div>
+                <div class="subtitle" th:text="${editMode} ? '編輯模式：表頭與品項會一起儲存。' : '檢視模式：點擊右側編輯按鈕後才可修改單據。'"></div>
             </div>
-            <div>
-                <a class="btn btn-outline" href="/purchases">進貨單列表</a>
+            <div class="actions">
+                <a class="btn btn-outline" href="/purchases">回列表</a>
+                <a class="btn btn-primary" th:if="${!editMode and order.status != 'VOID'}" th:href="@{'/purchases/' + ${order.purchaseId} + '?edit=true'}">編輯單據</a>
+                <a class="btn btn-outline" th:if="${editMode}" th:href="@{'/purchases/' + ${order.purchaseId}}">取消編輯</a>
                 <a class="btn btn-primary" href="/purchases/new">新增進貨單</a>
+                <form method="post" th:if="${order.status == 'DRAFT'}" th:action="@{'/purchases/' + ${order.purchaseId} + '/delete-draft'}" onsubmit="return confirm('確定刪除此草稿？此動作無法復原。')"><button class="btn-danger" type="submit">刪除草稿</button></form>
+                <form method="post" th:if="${order.status == 'CONFIRMED'}" th:action="@{'/purchases/' + ${order.purchaseId} + '/void'}" onsubmit="return confirm('確定作廢此進貨單？作廢後仍可恢復。')"><button class="btn-danger" type="submit">作廢單據</button></form>
+                <form method="post" th:if="${order.status == 'VOID'}" th:action="@{'/purchases/' + ${order.purchaseId} + '/restore'}" onsubmit="return confirm('確定恢復此進貨單？')"><button class="btn-primary" type="submit">恢復單據</button></form>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">單據資訊</div>
-            <div class="card-body">
-                <div class="grid grid-4">
-                    <div><label>進貨單號</label><input th:value="${order.purchaseNo}" readonly></div>
-                    <div><label>進貨日期</label><input th:value="${order.purchaseDate}" readonly></div>
-                    <div><label>供應商</label><input th:value="${supplier != null ? supplier.supplierName : '未指定'}" readonly></div>
-                    <div><label>狀態</label><input th:value="${order.status}" readonly></div>
-                </div>
-            </div>
-        </div>
+        <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
+        <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
-        <div class="card" th:if="${order.status == 'DRAFT'}">
-            <div class="card-header">新增進貨品項</div>
-            <div class="card-body">
-                <form method="post" th:action="@{'/purchases/' + ${order.purchaseId} + '/items'}">
+        <form method="post" th:if="${editMode and order.status != 'VOID'}" th:action="@{'/purchases/' + ${order.purchaseId} + '/save-full'}">
+            <div class="card">
+                <div class="card-header">單據資訊</div>
+                <div class="card-body">
                     <div class="grid grid-4">
+                        <div><label>進貨單號</label><input th:value="${order.purchaseNo}" readonly></div>
+                        <div><label>進貨日期</label><input type="date" name="purchaseDate" th:value="${order.purchaseDate}" required></div>
                         <div>
-                            <label>產品</label>
-                            <select name="productId" required>
-                                <option value="">請選擇產品</option>
-                                <option th:each="p : ${products}" th:value="${p.productId}" th:text="${p.productCode + '｜' + p.productName + '｜' + (p.productAlias ?: '')}"></option>
+                            <label>供應商</label>
+                            <select name="supplierId" class="refresh-on-focus">
+                                <option value="">未指定</option>
+                                <option th:each="s : ${suppliers}" th:value="${s.supplierId}" th:selected="${s.supplierId == order.supplierId}" th:text="${s.supplierName}"></option>
+                                <option value="__new__">＋ 新增供應商...</option>
                             </select>
                         </div>
-                        <div><label>批發價</label><input name="wholesalePrice" type="number" step="1" value="0"></div>
-                        <div><label>銷售價</label><input name="salePrice" type="number" step="1" value="0"></div>
-                        <div><label>數量</label><input name="quantity" type="number" min="1" value="1" required></div>
+                        <div><label>狀態</label><input th:value="${order.status == 'CONFIRMED' ? '已確認' : (order.status == 'VOID' ? '已作廢' : '草稿')}" readonly></div>
                     </div>
                     <div class="grid grid-4" style="margin-top:14px;">
-                        <div><label>盤數代號</label><input name="trayQuantityCode" placeholder="例如 P15"></div>
-                        <div><label>尺寸代號</label><input name="sizeCode" placeholder="例如 k0"></div>
-                        <div style="display:flex;align-items:end;"><button class="btn-primary" type="submit">加入明細</button></div>
+                        <div><label>是否計稅</label><select name="taxEnabled"><option value="false" th:selected="${!order.taxEnabled}">否</option><option value="true" th:selected="${order.taxEnabled}">是，5%</option></select></div>
+                        <div style="grid-column: span 3;"><label>備註</label><input name="note" th:value="${order.note}" placeholder="可輸入備註"></div>
                     </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">進貨明細</div>
-            <div class="card-body">
-                <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
-                <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
-                <div class="alert alert-info" th:if="${labelFilePath != null}">貼紙 PDF：<a th:href="@{/local-file(path=${labelFilePath})}" target="_blank" th:text="${labelFilePath}"></a></div>
-                <div class="alert alert-info" th:if="${order.status == 'DRAFT'}">進貨單確認後才會建立批次條碼，屆時才能列印貼紙。</div>
-                <form th:if="${order.status == 'CONFIRMED' and !#lists.isEmpty(lots)}" method="post" target="_blank" th:action="@{'/labels/purchases/' + ${order.purchaseId} + '/batch'}" style="margin-bottom:14px; display:flex; gap:10px; align-items:end;">
-                    <div style="width:160px;"><label>每個品項列印張數</label><input name="copies" type="number" min="1" value="1"></div>
-                    <button class="btn-primary" type="submit">產生並開啟全部貼紙 PDF</button>
-                    <a class="btn btn-outline" href="/settings/labels">貼紙設定</a>
-                </form>
-                <div style="margin-bottom:14px;" th:if="${order.status != 'CONFIRMED' or #lists.isEmpty(lots)}">
-                    <a class="btn btn-outline" href="/settings/labels">貼紙設定</a>
-                </div>
-                <table>
-                    <thead>
-                    <tr>
-                        <th>#</th><th>品號</th><th>品名</th><th>小名</th><th>批發價</th><th>銷售價</th><th>P</th><th>尺寸</th><th>數量</th><th>小計</th><th th:if="${order.status == 'DRAFT'}">操作</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="item, st : ${items}">
-                        <td th:text="${st.count}"></td>
-                        <td th:text="${item.productCode}"></td>
-                        <td th:text="${item.productName}"></td>
-                        <td th:text="${item.productAlias}"></td>
-                        <td th:text="${item.wholesalePrice}"></td>
-                        <td th:text="${item.salePrice}"></td>
-                        <td th:text="${item.trayQuantityCode}"></td>
-                        <td th:text="${item.sizeCode}"></td>
-                        <td th:text="${item.quantity}"></td>
-                        <td th:text="${item.amount}"></td>
-                        <td th:if="${order.status == 'DRAFT'}">
-                            <form method="post" th:action="@{'/purchases/' + ${order.purchaseId} + '/items/' + ${item.itemId} + '/delete'}">
-                                <button type="submit" class="btn-outline">刪除</button>
-                            </form>
-                        </td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(items)}"><td colspan="11">尚未新增明細</td></tr>
-                    </tbody>
-                </table>
-                <div class="grid grid-4" style="margin-top:16px;">
-                    <div><label>總數量</label><input th:value="${order.totalQuantity}" readonly></div>
-                    <div><label>未稅總額</label><input th:value="${order.subtotalAmount}" readonly></div>
-                    <div><label>稅額</label><input th:value="${order.taxAmount}" readonly></div>
-                    <div><label>總金額</label><input th:value="${order.totalAmount}" readonly></div>
-                </div>
-                <div style="margin-top:16px;" th:if="${order.status == 'DRAFT'}">
-                    <form method="post" th:action="@{'/purchases/' + ${order.purchaseId} + '/confirm'}" onsubmit="return confirm('確認進貨後會建立批次、條碼並增加庫存，是否繼續？')">
-                        <button class="btn-primary" type="submit">確認進貨並建立條碼批次</button>
-                    </form>
                 </div>
             </div>
-        </div>
 
-        <div class="card" th:if="${order.status == 'CONFIRMED'}">
-            <div class="card-header">進貨批次與貼紙</div>
-            <div class="card-body">
-                <table>
-                    <thead>
-                    <tr><th>條碼</th><th>品名</th><th>進貨日</th><th>批發價</th><th>銷售價</th><th>剩餘</th><th>列印次數</th><th>操作</th></tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="lot : ${lots}">
-                        <td th:text="${lot.barcodeValue}"></td>
-                        <td th:text="${lot.productName + ' ' + (lot.productAlias ?: '')}"></td>
-                        <td th:text="${lot.purchaseDateCode}"></td>
-                        <td th:text="${lot.wholesalePrice}"></td>
-                        <td th:text="${lot.salePrice}"></td>
-                        <td th:text="${lot.remainingQuantity}"></td>
-                        <td th:text="${lot.labelPrintedCount}"></td>
-                        <td>
-                            <form method="post" target="_blank" th:action="@{'/labels/lots/' + ${lot.lotId}}">
-                                <input type="hidden" name="purchaseId" th:value="${order.purchaseId}">
-                                <button class="btn-outline" type="submit">產生並開啟貼紙 PDF</button>
-                            </form>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-                <div class="alert alert-info" th:if="${order.pdfPath != null}">進貨單 PDF：<a th:href="@{/local-file(path=${order.pdfPath})}" target="_blank" th:text="${order.pdfPath}"></a></div>
+            <div class="card">
+                <div class="card-header">進貨品項</div>
+                <div class="card-body">
+                    <table>
+                        <thead><tr><th>#</th><th>產品</th><th>批發價</th><th>銷售價</th><th>P</th><th>尺寸</th><th>數量</th><th>貼紙範本</th><th>小計</th></tr></thead>
+                        <tbody>
+                        <tr th:each="item, st : ${items}">
+                            <td th:text="${st.count}"></td>
+                            <td style="min-width:250px;">
+                                <input type="hidden" name="itemId" th:value="${item.itemId}">
+                                <select name="productId" required class="refresh-on-focus">
+                                    <option th:each="p : ${products}" th:value="${p.productId}" th:selected="${p.productId == item.productId}" th:text="${p.productCode + '｜' + p.productName + '｜' + (p.productAlias ?: '')}"></option>
+                                    <option value="__new__">＋ 新增產品...</option>
+                                </select>
+                            </td>
+                            <td><input name="wholesalePrice" type="number" step="1" th:value="${item.wholesalePrice}"></td>
+                            <td><input name="salePrice" type="number" step="1" th:value="${item.salePrice}"></td>
+                            <td><input name="trayQuantityCode" th:value="${item.trayQuantityCode}"></td>
+                            <td><input name="sizeCode" th:value="${item.sizeCode}"></td>
+                            <td><input name="quantity" type="number" min="1" th:value="${item.quantity}"></td>
+                            <td>
+                                <select name="labelSettingId" class="refresh-on-focus">
+                                    <option th:each="tpl : ${labelTemplates}" th:value="${tpl.settingId}" th:selected="${tpl.settingId == item.labelSettingId}" th:text="${tpl.templateName + (tpl.defaultTemplate ? '（預設）' : '')}"></option>
+                                    <option value="__new__">＋ 新增進貨貼紙範本...</option>
+                                </select>
+                            </td>
+                            <td th:text="${item.amount}"></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(items)}"><td colspan="9">尚未新增明細，可於下方新增第一筆品項。</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="alert alert-info" th:if="${order.status == 'DRAFT'}">新增品項會與表頭一起儲存。確認進貨後才會建立批次條碼與貼紙 PDF。</div>
+                    <div class="alert alert-info" th:if="${order.status == 'CONFIRMED'}">已確認單據儲存後，系統會同步更新進貨批次、入庫紀錄、進貨單 PDF 與貼紙 PDF。</div>
+
+                    <div class="card" style="box-shadow:none; margin-top:16px;" th:if="${order.status != 'VOID'}">
+                        <div class="card-header">新增一筆品項</div>
+                        <div class="card-body">
+                            <div class="grid grid-4">
+                                <div><label>產品</label><select name="newProductId" class="refresh-on-focus"><option value="">不新增</option><option th:each="p : ${products}" th:value="${p.productId}" th:text="${p.productCode + '｜' + p.productName + '｜' + (p.productAlias ?: '')}"></option><option value="__new__">＋ 新增產品...</option></select></div>
+                                <div><label>批發價</label><input name="newWholesalePrice" type="number" step="1" value="0"></div>
+                                <div><label>銷售價</label><input name="newSalePrice" type="number" step="1" value="0"></div>
+                                <div><label>數量</label><input name="newQuantity" type="number" min="1" value="1"></div>
+                            </div>
+                            <div class="grid grid-4" style="margin-top:14px;">
+                                <div><label>P</label><input name="newTrayQuantityCode" placeholder="例如 P15"></div>
+                                <div><label>尺寸</label><input name="newSizeCode" placeholder="例如 K0"></div>
+                                <div><label>貼紙範本</label><select name="newLabelSettingId" class="refresh-on-focus"><option th:each="tpl : ${labelTemplates}" th:value="${tpl.settingId}" th:text="${tpl.templateName + (tpl.defaultTemplate ? '（預設）' : '')}"></option><option value="__new__">＋ 新增進貨貼紙範本...</option></select></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-4" style="margin-top:16px;">
+                        <div><label>總數量</label><input th:value="${order.totalQuantity}" readonly></div>
+                        <div><label>未稅總額</label><input th:value="${order.subtotalAmount}" readonly></div>
+                        <div><label>稅額</label><input th:value="${order.taxAmount}" readonly></div>
+                        <div><label>總金額</label><input th:value="${order.totalAmount}" readonly></div>
+                    </div>
+                    <div class="actions" style="margin-top:16px;">
+                        <button class="btn-primary" type="submit" th:text="${order.status == 'DRAFT' ? '儲存草稿' : '儲存單據並更新 PDF / 貼紙'}">儲存草稿</button>
+                        <button class="btn-outline" th:if="${order.status == 'DRAFT'}" type="submit" formaction="#" onclick="event.preventDefault(); document.getElementById('confirmForm').submit();">確認進貨</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <form id="confirmForm" method="post" th:action="@{'/purchases/' + ${order.purchaseId} + '/confirm'}" onsubmit="return confirm('確認進貨後會建立批次、條碼並增加庫存，是否繼續？')"></form>
+
+        <div th:if="${!editMode}">
+            <div class="card">
+                <div class="card-header">單據資訊</div>
+                <div class="card-body">
+                    <div class="grid grid-4">
+                        <div><label>進貨單號</label><input th:value="${order.purchaseNo}" readonly></div>
+                        <div><label>進貨日期</label><input th:value="${order.purchaseDate}" readonly></div>
+                        <div><label>供應商</label><input th:value="${supplier != null ? supplier.supplierName : '未指定'}" readonly></div>
+                        <div><label>狀態</label><input th:value="${order.status == 'CONFIRMED' ? '已確認' : (order.status == 'VOID' ? '已作廢' : '草稿')}" readonly></div>
+                    </div>
+                    <div class="alert alert-info" th:if="${order.status == 'CONFIRMED'}">已確認進貨單若需修正，請先點「編輯單據」，完成後按「儲存單據」。</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">進貨明細</div>
+                <div class="card-body">
+                    <table>
+                        <thead><tr><th>#</th><th>品號</th><th>品名</th><th>小名</th><th>批發價</th><th>銷售價</th><th>P</th><th>尺寸</th><th>數量</th><th>小計</th></tr></thead>
+                        <tbody>
+                        <tr th:each="item, st : ${items}">
+                            <td th:text="${st.count}"></td><td th:text="${item.productCode}"></td><td th:text="${item.productName}"></td><td th:text="${item.productAlias}"></td><td th:text="${item.wholesalePrice}"></td><td th:text="${item.salePrice}"></td><td th:text="${item.trayQuantityCode}"></td><td th:text="${item.sizeCode}"></td><td th:text="${item.quantity}"></td><td th:text="${item.amount}"></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(items)}"><td colspan="10">尚未新增明細</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="grid grid-4" style="margin-top:16px;">
+                        <div><label>總數量</label><input th:value="${order.totalQuantity}" readonly></div>
+                        <div><label>未稅總額</label><input th:value="${order.subtotalAmount}" readonly></div>
+                        <div><label>稅額</label><input th:value="${order.taxAmount}" readonly></div>
+                        <div><label>總金額</label><input th:value="${order.totalAmount}" readonly></div>
+                    </div>
+                    <div class="alert alert-info" th:if="${order.pdfPath != null}">進貨單 PDF：<a th:href="@{/local-file(path=${order.pdfPath})}" target="_blank" th:text="${order.pdfPath}"></a></div>
+                    <div class="alert alert-info" th:if="${order.labelPdfPath != null}">全部貼紙 PDF：<a th:href="@{/local-file(path=${order.labelPdfPath})}" target="_blank" th:text="${order.labelPdfPath}"></a></div>
+                </div>
+            </div>
+
+            <div class="card" th:if="${order.status == 'CONFIRMED'}">
+                <div class="card-header">進貨批次</div>
+                <div class="card-body">
+                    <table>
+                        <thead><tr><th>條碼</th><th>品名</th><th>進貨日</th><th>批發價</th><th>銷售價</th><th>剩餘</th><th>列印次數</th></tr></thead>
+                        <tbody>
+                        <tr th:each="lot : ${lots}">
+                            <td th:text="${lot.barcodeValue}"></td><td th:text="${lot.productName + ' ' + (lot.productAlias ?: '')}"></td><td th:text="${lot.purchaseDateCode}"></td><td th:text="${lot.wholesalePrice}"></td><td th:text="${lot.salePrice}"></td><td th:text="${lot.remainingQuantity}"></td><td th:text="${lot.labelPrintedCount}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
 </div>
+<script>
+function handleSpecialSelect(select){
+  select.addEventListener('change', function(){
+    if (this.value === '__new__') {
+      const name = this.getAttribute('name');
+      if (name === 'supplierId') window.open('/suppliers', '_blank');
+      if (name === 'productId' || name === 'newProductId') window.open('/products', '_blank');
+      if (name === 'labelSettingId' || name === 'newLabelSettingId') window.open('/settings/label-templates', '_blank');
+      this.value='';
+    }
+  });
+}
+document.querySelectorAll('select').forEach(handleSpecialSelect);
+</script>
 </body>
 </html>

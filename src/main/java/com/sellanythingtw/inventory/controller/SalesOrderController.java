@@ -32,12 +32,15 @@ public class SalesOrderController {
     @GetMapping("/sales/new")
     public String newSales(Model model) {
         model.addAttribute("customers", customerRepository.findAll());
+        model.addAttribute("today", LocalDate.now());
         return "sales/new";
     }
 
     @GetMapping("/sales/{salesId}")
-    public String detail(@PathVariable Long salesId, Model model) {
+    public String detail(@PathVariable Long salesId, @RequestParam(defaultValue = "false") boolean edit, Model model) {
         model.addAllAttributes(salesOrderService.getDetail(salesId));
+        model.addAttribute("customers", customerRepository.findAll());
+        model.addAttribute("editMode", edit);
         return "sales/detail";
     }
 
@@ -87,6 +90,40 @@ public class SalesOrderController {
         try {
             salesOrderService.confirm(salesId, paymentType);
             redirectAttributes.addFlashAttribute("successMessage", "銷貨單已確認，庫存已扣除。");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/sales/" + salesId;
+    }
+
+    @PostMapping("/sales/{salesId}/delete-draft")
+    public String deleteDraftPage(@PathVariable Long salesId, RedirectAttributes redirectAttributes) {
+        try {
+            salesOrderService.deleteDraft(salesId);
+            redirectAttributes.addFlashAttribute("successMessage", "銷貨草稿已刪除。");
+            return "redirect:/sales";
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/sales/" + salesId;
+        }
+    }
+
+    @PostMapping("/sales/{salesId}/void")
+    public String voidPage(@PathVariable Long salesId, RedirectAttributes redirectAttributes) {
+        try {
+            salesOrderService.voidOrder(salesId);
+            redirectAttributes.addFlashAttribute("successMessage", "銷貨單已作廢，可於單據頁恢復。");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/sales/" + salesId;
+    }
+
+    @PostMapping("/sales/{salesId}/restore")
+    public String restorePage(@PathVariable Long salesId, RedirectAttributes redirectAttributes) {
+        try {
+            salesOrderService.restoreOrder(salesId);
+            redirectAttributes.addFlashAttribute("successMessage", "銷貨單已恢復。");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }

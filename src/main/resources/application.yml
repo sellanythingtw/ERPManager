@@ -21,7 +21,7 @@ spring:
 
 inventory:
   app-name: ERPManager 本地端進銷存系統
-  version: 0.3.3
+  version: 0.3.7
   base-dir: ./app
   pdf-dir: ./app/files/pdf
   label-dir: ./app/files/labels

@@ -46,7 +46,7 @@
                             <span th:each="c : ${customers}" th:if="${c.customerId == order.customerId}" th:text="${c.customerName}"></span>
                             <span th:if="${order.customerId == null}">未指定</span>
                         </td>
-                        <td><span class="badge" th:classappend="${order.status == 'CONFIRMED'} ? ' badge-success' : ' badge-warning'" th:text="${order.status == 'CONFIRMED' ? '已確認' : '草稿'}"></span></td>
+                        <td><span class="badge" th:classappend="${order.status == 'CONFIRMED'} ? ' badge-success' : (order.status == 'VOID' ? ' badge-danger' : ' badge-warning')" th:text="${order.status == 'CONFIRMED' ? '已確認' : (order.status == 'VOID' ? '已作廢' : '草稿')}"></span></td>
                         <td th:text="${order.paymentType ?: '-'}"></td>
                         <td th:text="${order.totalQuantity}"></td>
                         <td th:text="${order.totalAmount}"></td>
@@ -54,7 +54,7 @@
                             <a th:if="${order.pdfPath != null}" th:href="@{/local-file(path=${order.pdfPath})}" target="_blank">開啟</a>
                             <span th:if="${order.pdfPath == null}">-</span>
                         </td>
-                        <td><a class="btn btn-outline" th:href="@{'/sales/' + ${order.salesId}}">查看 / 編輯</a></td>
+                        <td><a class="btn btn-outline" th:href="@{'/sales/' + ${order.salesId}}">查看</a> <a class="btn btn-primary" th:if="${order.status != 'VOID'}" th:href="@{'/sales/' + ${order.salesId} + '?edit=true'}">編輯</a></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(orders)}"><td colspan="10">尚無銷貨單資料</td></tr>
                     </tbody>

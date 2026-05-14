@@ -2,8 +2,8 @@
 <head><meta charset="UTF-8"><title>產品管理</title><link rel="stylesheet" href="/css/app.css"></head>
 <body><div class="app"><div th:replace="~{fragments :: sidebar('products')}"></div><main class="main">
 <div class="topbar"><div><h1>產品管理</h1><div class="subtitle">產品建檔與後續 Excel 匯入功能預留</div></div></div>
-<div class="card"><div class="card-header">新增產品</div><div class="card-body">
-<div class="grid grid-4">
+<div class="card"><div class="card-header">新增 / 編輯產品</div><div class="card-body">
+<input id="productId" type="hidden"><div class="grid grid-4">
 <div><label>品號</label><input id="productCode" placeholder="空白則自動編號"></div>
 <div><label>類別</label><input id="category"></div>
 <div><label>品名</label><input id="productName"></div>
@@ -15,11 +15,25 @@
 <div><label>預設進貨價</label><input id="defaultPurchasePrice" type="number" value="0"></div>
 <div><label>預設銷貨價</label><input id="defaultSalePrice" type="number" value="0"></div>
 </div><p><button class="btn-primary" onclick="saveProduct()">儲存產品</button></p><div id="msg"></div></div></div>
-<div class="card"><div class="card-header">產品列表</div><div class="card-body"><table><thead><tr><th>品號</th><th>類別</th><th>品名</th><th>小名</th><th>單位</th><th>安全庫存</th></tr></thead><tbody><tr th:each="p : ${products}"><td th:text="${p.productCode}"></td><td th:text="${p.category}"></td><td th:text="${p.productName}"></td><td th:text="${p.productAlias}"></td><td th:text="${p.unit}"></td><td th:text="${p.safetyStock}"></td></tr></tbody></table></div></div>
+<div class="card"><div class="card-header">產品列表</div><div class="card-body"><table><thead><tr><th>品號</th><th>類別</th><th>品名</th><th>小名</th><th>單位</th><th>安全庫存</th><th>操作</th></tr></thead><tbody><tr th:each="p : ${products}"><td th:text="${p.productCode}"></td><td th:text="${p.category}"></td><td th:text="${p.productName}"></td><td th:text="${p.productAlias}"></td><td th:text="${p.unit}"></td><td th:text="${p.safetyStock}"></td><td><button class="btn btn-outline" type="button" th:attr="data-id=${p.productId},data-code=${p.productCode},data-category=${p.category},data-name=${p.productName},data-alias=${p.productAlias},data-spec=${p.specification},data-color=${p.color},data-unit=${p.unit},data-safety=${p.safetyStock},data-purchase=${p.defaultPurchasePrice},data-sale=${p.defaultSalePrice}" onclick="editProduct(this)">編輯</button></td></tr></tbody></table></div></div>
 <script>
 async function saveProduct(){
- const body={productCode:val('productCode'),category:val('category'),productName:val('productName'),productAlias:val('productAlias'),specification:val('specification'),color:val('color'),unit:val('unit'),safetyStock:Number(val('safetyStock')),defaultPurchasePrice:Number(val('defaultPurchasePrice')),defaultSalePrice:Number(val('defaultSalePrice'))};
+ const body={productId:val('productId')||null,productCode:val('productCode'),category:val('category'),productName:val('productName'),productAlias:val('productAlias'),specification:val('specification'),color:val('color'),unit:val('unit'),safetyStock:Number(val('safetyStock')),defaultPurchasePrice:Number(val('defaultPurchasePrice')),defaultSalePrice:Number(val('defaultSalePrice'))};
  const r=await fetch('/api/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); const j=await r.json(); document.getElementById('msg').innerHTML='<div class="alert alert-info">'+j.message+'</div>'; if(j.success) setTimeout(()=>location.reload(),600);
-} function val(id){return document.getElementById(id).value;}
+} function editProduct(btn){
+ document.getElementById('productId').value=btn.dataset.id||'';
+ document.getElementById('productCode').value=btn.dataset.code||'';
+ document.getElementById('category').value=btn.dataset.category||'';
+ document.getElementById('productName').value=btn.dataset.name||'';
+ document.getElementById('productAlias').value=btn.dataset.alias||'';
+ document.getElementById('specification').value=btn.dataset.spec||'';
+ document.getElementById('color').value=btn.dataset.color||'';
+ document.getElementById('unit').value=btn.dataset.unit||'';
+ document.getElementById('safetyStock').value=btn.dataset.safety||0;
+ document.getElementById('defaultPurchasePrice').value=btn.dataset.purchase||0;
+ document.getElementById('defaultSalePrice').value=btn.dataset.sale||0;
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function val(id){return document.getElementById(id).value;}
 </script>
 </main></div></body></html>

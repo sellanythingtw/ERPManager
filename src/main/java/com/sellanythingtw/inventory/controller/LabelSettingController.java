@@ -4,9 +4,8 @@ import com.sellanythingtw.inventory.entity.LabelPrintSetting;
 import com.sellanythingtw.inventory.service.LabelPrintService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class LabelSettingController {
@@ -16,15 +15,35 @@ public class LabelSettingController {
         this.labelPrintService = labelPrintService;
     }
 
-    @GetMapping("/settings/labels")
-    public String labelSettings(Model model) {
-        model.addAttribute("setting", labelPrintService.getSetting());
+    @GetMapping({"/settings/labels", "/settings/label-templates"})
+    public String labelSettings(@RequestParam(required = false) Long settingId, Model model) {
+        model.addAttribute("templates", labelPrintService.listTemplates());
+        model.addAttribute("setting", settingId == null ? labelPrintService.getDefaultTemplate() : labelPrintService.getTemplate(settingId));
         return "settings/labels";
     }
 
+    @PostMapping("/settings/labels/new")
+    public String createTemplate(RedirectAttributes redirectAttributes) {
+        LabelPrintSetting setting = labelPrintService.createTemplate();
+        redirectAttributes.addFlashAttribute("successMessage", "進貨貼紙範本已建立。");
+        return "redirect:/settings/label-templates?settingId=" + setting.getSettingId();
+    }
+
     @PostMapping("/settings/labels")
-    public String saveLabelSettings(@ModelAttribute LabelPrintSetting setting) {
-        labelPrintService.updateSetting(setting);
-        return "redirect:/settings/labels?saved=1";
+    public String saveLabelSettings(@ModelAttribute LabelPrintSetting setting, RedirectAttributes redirectAttributes) {
+        LabelPrintSetting saved = labelPrintService.updateSetting(setting);
+        redirectAttributes.addFlashAttribute("successMessage", "進貨貼紙範本已儲存。後續進貨單儲存時會依品項選用的範本自動更新貼紙 PDF。");
+        return "redirect:/settings/label-templates?settingId=" + saved.getSettingId();
+    }
+
+    @PostMapping("/settings/labels/{settingId}/delete")
+    public String deleteTemplate(@PathVariable Long settingId, RedirectAttributes redirectAttributes) {
+        try {
+            labelPrintService.deleteTemplate(settingId);
+            redirectAttributes.addFlashAttribute("successMessage", "進貨貼紙範本已刪除。");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/settings/label-templates";
     }
 }

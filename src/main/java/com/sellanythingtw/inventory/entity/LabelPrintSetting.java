@@ -8,14 +8,16 @@ import java.time.LocalDateTime;
 public class LabelPrintSetting {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long settingId;
+    private String templateName = "預設進貨貼紙";
+    private Boolean defaultTemplate = true;
     private Double labelWidthMm = 50.0;
     private Double labelHeightMm = 30.0;
-    private Double marginTopMm = 2.0;
-    private Double marginLeftMm = 2.0;
-    private Integer fontSizeLarge = 12;
+    private Double marginTopMm = 3.0;
+    private Double marginLeftMm = 3.0;
+    private Integer fontSizeLarge = 11;
     private Integer fontSizeNormal = 8;
-    private Double barcodeWidthMm = 42.0;
-    private Double barcodeHeightMm = 8.0;
+    private Double barcodeWidthMm = 38.0;
+    private Double barcodeHeightMm = 7.0;
     private Boolean showBorder = true;
     private LocalDateTime updatedAt;
 
@@ -23,6 +25,10 @@ public class LabelPrintSetting {
 
     public Long getSettingId() { return settingId; }
     public void setSettingId(Long settingId) { this.settingId = settingId; }
+    public String getTemplateName() { return templateName; }
+    public void setTemplateName(String templateName) { this.templateName = templateName; }
+    public Boolean getDefaultTemplate() { return defaultTemplate; }
+    public void setDefaultTemplate(Boolean defaultTemplate) { this.defaultTemplate = defaultTemplate; }
     public Double getLabelWidthMm() { return labelWidthMm; }
     public void setLabelWidthMm(Double labelWidthMm) { this.labelWidthMm = labelWidthMm; }
     public Double getLabelHeightMm() { return labelHeightMm; }

@@ -43,3 +43,11 @@ td { padding:12px; border-bottom:1px solid #e5e7eb; font-size:14px; }
   table { font-size: 12px; }
   th, td { padding: 6px; }
 }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.inline-actions { margin-bottom:14px; display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
+.btn-primary:hover { background:#1d4ed8; }
+.btn-outline:hover { background:#f3f4f6; }
+.card-header { background:#fff; }
+.table-actions { display:flex; gap:8px; align-items:center; }
+.btn-danger { background:#dc2626; color:#fff; }
+.btn-danger:hover { background:#b91c1c; }

@@ -14,7 +14,15 @@
                 <h1>銷貨單明細</h1>
                 <div class="subtitle">刷入進貨貼紙條碼，輸入數量，確認後扣除對應批次庫存。</div>
             </div>
-            <div><a class="btn btn-outline" href="/sales">銷貨單列表</a> <a class="btn btn-primary" href="/sales/new">新增銷貨單</a></div>
+            <div class="actions">
+                <a class="btn btn-outline" href="/sales">銷貨單列表</a>
+                <a class="btn btn-primary" th:if="${!editMode and order.status != 'VOID'}" th:href="@{'/sales/' + ${order.salesId} + '?edit=true'}">編輯單據</a>
+                <a class="btn btn-outline" th:if="${editMode}" th:href="@{'/sales/' + ${order.salesId}}">取消編輯</a>
+                <a class="btn btn-primary" href="/sales/new">新增銷貨單</a>
+                <form method="post" th:if="${order.status == 'DRAFT' and editMode}" th:action="@{'/sales/' + ${order.salesId} + '/delete-draft'}" onsubmit="return confirm('確定刪除此草稿？此動作無法復原。')"><button class="btn-danger" type="submit">刪除草稿</button></form>
+                <form method="post" th:if="${order.status == 'CONFIRMED'}" th:action="@{'/sales/' + ${order.salesId} + '/void'}" onsubmit="return confirm('確定作廢此銷貨單？作廢後仍可恢復。')"><button class="btn-danger" type="submit">作廢單據</button></form>
+                <form method="post" th:if="${order.status == 'VOID'}" th:action="@{'/sales/' + ${order.salesId} + '/restore'}" onsubmit="return confirm('確定恢復此銷貨單？')"><button class="btn-primary" type="submit">恢復單據</button></form>
+            </div>
         </div>
 
         <div class="card">
@@ -24,7 +32,7 @@
                     <div><label>銷貨單號</label><input th:value="${order.salesNo}" readonly></div>
                     <div><label>銷貨日期</label><input th:value="${order.salesDate}" readonly></div>
                     <div><label>客戶</label><input th:value="${customer != null ? customer.customerName : '未指定'}" readonly></div>
-                    <div><label>狀態</label><input th:value="${order.status}" readonly></div>
+                    <div><label>狀態</label><input th:value="${order.status == 'CONFIRMED' ? '已確認' : (order.status == 'VOID' ? '已作廢' : '草稿')}" readonly></div>
                 </div>
             </div>
         </div>
@@ -32,7 +40,7 @@
         <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
         <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
-        <div class="card" th:if="${order.status == 'DRAFT'}">
+        <div class="card" th:if="${order.status == 'DRAFT' and editMode}">
             <div class="card-header">條碼掃描輸入</div>
             <div class="card-body">
                 <div class="grid grid-4">
@@ -60,7 +68,7 @@
             <div class="card-body">
                 <table>
                     <thead>
-                    <tr><th>#</th><th>條碼</th><th>品號</th><th>品名</th><th>小名</th><th>供應商</th><th>進貨日</th><th>單價</th><th>數量</th><th>小計</th><th th:if="${order.status == 'DRAFT'}">操作</th></tr>
+                    <tr><th>#</th><th>條碼</th><th>品號</th><th>品名</th><th>小名</th><th>供應商</th><th>進貨日</th><th>單價</th><th>數量</th><th>小計</th><th th:if="${order.status == 'DRAFT' and editMode}">操作</th></tr>
                     </thead>
                     <tbody>
                     <tr th:each="item, st : ${items}">
@@ -92,7 +100,7 @@
             </div>
         </div>
 
-        <div class="card" th:if="${order.status == 'DRAFT'}">
+        <div class="card" th:if="${order.status == 'DRAFT' and editMode}">
             <div class="card-header">確認銷貨與付款類型</div>
             <div class="card-body">
                 <form method="post" th:action="@{'/sales/' + ${order.salesId} + '/confirm'}" onsubmit="return confirm('確認銷貨後會扣除批次庫存，是否繼續？')">
