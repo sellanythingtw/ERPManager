@@ -16,12 +16,12 @@
             </div>
             <div class="actions">
                 <a class="btn btn-outline" href="/purchases">回列表</a>
-                <a class="btn btn-primary" th:if="${!editMode and order.status != 'VOID'}" th:href="@{'/purchases/' + ${order.purchaseId} + '?edit=true'}">編輯單據</a>
-                <a class="btn btn-outline" th:if="${editMode}" th:href="@{'/purchases/' + ${order.purchaseId}}">取消編輯</a>
                 <a class="btn btn-primary" href="/purchases/new">新增進貨單</a>
                 <form method="post" th:if="${order.status == 'DRAFT'}" th:action="@{'/purchases/' + ${order.purchaseId} + '/delete-draft'}" onsubmit="return confirm('確定刪除此草稿？此動作無法復原。')"><button class="btn-danger" type="submit">刪除草稿</button></form>
                 <form method="post" th:if="${order.status == 'CONFIRMED'}" th:action="@{'/purchases/' + ${order.purchaseId} + '/void'}" onsubmit="return confirm('確定作廢此進貨單？作廢後仍可恢復。')"><button class="btn-danger" type="submit">作廢單據</button></form>
                 <form method="post" th:if="${order.status == 'VOID'}" th:action="@{'/purchases/' + ${order.purchaseId} + '/restore'}" onsubmit="return confirm('確定恢復此進貨單？')"><button class="btn-primary" type="submit">恢復單據</button></form>
+                <a class="btn btn-primary" th:if="${!editMode and order.status != 'VOID'}" th:href="@{'/purchases/' + ${order.purchaseId} + '?edit=true'}">編輯單據</a>
+                <a class="btn btn-outline" th:if="${editMode}" th:href="@{'/purchases/' + ${order.purchaseId}}">取消編輯</a>
             </div>
         </div>
 
@@ -74,6 +74,7 @@
                             <td><input name="quantity" type="number" min="1" th:value="${item.quantity}"></td>
                             <td>
                                 <select name="labelSettingId" class="refresh-on-focus">
+                                    <option value="" th:if="${#lists.isEmpty(labelTemplates)}">尚未建立貼紙範本</option>
                                     <option th:each="tpl : ${labelTemplates}" th:value="${tpl.settingId}" th:selected="${tpl.settingId == item.labelSettingId}" th:text="${tpl.templateName + (tpl.defaultTemplate ? '（預設）' : '')}"></option>
                                     <option value="__new__">＋ 新增進貨貼紙範本...</option>
                                 </select>
@@ -85,7 +86,6 @@
                     </table>
 
                     <div class="alert alert-info" th:if="${order.status == 'DRAFT'}">新增品項會與表頭一起儲存。確認進貨後才會建立批次條碼與貼紙 PDF。</div>
-                    <div class="alert alert-info" th:if="${order.status == 'CONFIRMED'}">已確認單據儲存後，系統會同步更新進貨批次、入庫紀錄、進貨單 PDF 與貼紙 PDF。</div>
 
                     <div class="card" style="box-shadow:none; margin-top:16px;" th:if="${order.status != 'VOID'}">
                         <div class="card-header">新增一筆品項</div>
@@ -99,7 +99,7 @@
                             <div class="grid grid-4" style="margin-top:14px;">
                                 <div><label>P</label><input name="newTrayQuantityCode" placeholder="例如 P15"></div>
                                 <div><label>尺寸</label><input name="newSizeCode" placeholder="例如 K0"></div>
-                                <div><label>貼紙範本</label><select name="newLabelSettingId" class="refresh-on-focus"><option th:each="tpl : ${labelTemplates}" th:value="${tpl.settingId}" th:text="${tpl.templateName + (tpl.defaultTemplate ? '（預設）' : '')}"></option><option value="__new__">＋ 新增進貨貼紙範本...</option></select></div>
+                                <div><label>貼紙範本</label><select name="newLabelSettingId" class="refresh-on-focus"><option value="" th:if="${#lists.isEmpty(labelTemplates)}">尚未建立貼紙範本</option><option th:each="tpl : ${labelTemplates}" th:value="${tpl.settingId}" th:text="${tpl.templateName + (tpl.defaultTemplate ? '（預設）' : '')}"></option><option value="__new__">＋ 新增進貨貼紙範本...</option></select></div>
                             </div>
                         </div>
                     </div>
@@ -152,8 +152,16 @@
                         <div><label>稅額</label><input th:value="${order.taxAmount}" readonly></div>
                         <div><label>總金額</label><input th:value="${order.totalAmount}" readonly></div>
                     </div>
-                    <div class="alert alert-info" th:if="${order.pdfPath != null}">進貨單 PDF：<a th:href="@{/local-file(path=${order.pdfPath})}" target="_blank" th:text="${order.pdfPath}"></a></div>
-                    <div class="alert alert-info" th:if="${order.labelPdfPath != null}">全部貼紙 PDF：<a th:href="@{/local-file(path=${order.labelPdfPath})}" target="_blank" th:text="${order.labelPdfPath}"></a></div>
+                    <div class="actions" style="margin-top:16px;" th:if="${order.pdfPath != null}">
+                        <a class="btn btn-primary" th:href="@{/local-file/print(path=${order.pdfPath})}" target="_blank">列印 PDF</a>
+                        <a class="btn btn-outline" th:href="@{/local-file/download(path=${order.pdfPath})}">下載 PDF</a>
+                        <a class="btn btn-outline" th:href="@{/local-file/open-folder(path=${order.pdfPath}, back=${'/purchases/' + order.purchaseId})}">打開資料夾</a>
+                    </div>
+                    <div class="actions" style="margin-top:8px;" th:if="${order.labelPdfPath != null}">
+                        <a class="btn btn-primary" th:href="@{/local-file/print(path=${order.labelPdfPath})}" target="_blank">列印全部貼紙</a>
+                        <a class="btn btn-outline" th:href="@{/local-file/download(path=${order.labelPdfPath})}">下載全部貼紙</a>
+                        <a class="btn btn-outline" th:href="@{/local-file/open-folder(path=${order.labelPdfPath}, back=${'/purchases/' + order.purchaseId})}">打開貼紙資料夾</a>
+                    </div>
                 </div>
             </div>
 
@@ -161,10 +169,10 @@
                 <div class="card-header">進貨批次</div>
                 <div class="card-body">
                     <table>
-                        <thead><tr><th>條碼</th><th>品名</th><th>進貨日</th><th>批發價</th><th>銷售價</th><th>剩餘</th><th>列印次數</th></tr></thead>
+                        <thead><tr><th>條碼</th><th>品名</th><th>進貨日</th><th>批發價</th><th>銷售價</th><th>剩餘</th><th>列印次數</th><th>操作</th></tr></thead>
                         <tbody>
                         <tr th:each="lot : ${lots}">
-                            <td th:text="${lot.barcodeValue}"></td><td th:text="${lot.productName + ' ' + (lot.productAlias ?: '')}"></td><td th:text="${lot.purchaseDateCode}"></td><td th:text="${lot.wholesalePrice}"></td><td th:text="${lot.salePrice}"></td><td th:text="${lot.remainingQuantity}"></td><td th:text="${lot.labelPrintedCount}"></td>
+                            <td th:text="${lot.barcodeValue}"></td><td th:text="${lot.productName + ' ' + (lot.productAlias ?: '')}"></td><td th:text="${lot.purchaseDateCode}"></td><td th:text="${lot.wholesalePrice}"></td><td th:text="${lot.salePrice}"></td><td th:text="${lot.remainingQuantity}"></td><td th:text="${lot.labelPrintedCount}"></td><td><form method="post" th:action="@{'/labels/lots/' + ${lot.lotId}}" target="_blank"><input type="hidden" name="purchaseId" th:value="${order.purchaseId}"><button class="btn-outline" type="submit">列印貼紙</button></form></td>
                         </tr>
                         </tbody>
                     </table>
@@ -185,7 +193,41 @@ function handleSpecialSelect(select){
     }
   });
 }
+async function refreshSelectOptions(type){
+  let url = '', selector = '', emptyLabel = '';
+  if (type === 'suppliers') { url='/api/options/suppliers'; selector='select[name="supplierId"]'; emptyLabel='未指定'; }
+  if (type === 'products') { url='/api/options/products'; selector='select[name="productId"],select[name="newProductId"]'; emptyLabel='不新增'; }
+  if (type === 'labels') { url='/api/options/label-templates'; selector='select[name="labelSettingId"],select[name="newLabelSettingId"]'; emptyLabel='尚未建立貼紙範本'; }
+  if (!url) return;
+  const list = await fetch(url).then(r => r.json()).catch(() => null);
+  if (!list) return;
+  document.querySelectorAll(selector).forEach(select => {
+    const current = select.value;
+    const specialText = type === 'suppliers' ? '＋ 新增供應商...' : (type === 'products' ? '＋ 新增產品...' : '＋ 新增進貨貼紙範本...');
+    select.innerHTML = '';
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = list.length === 0 && type === 'labels' ? '尚未建立貼紙範本' : emptyLabel;
+    select.appendChild(empty);
+    list.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.label;
+      if (String(current) === String(item.id)) opt.selected = true;
+      select.appendChild(opt);
+    });
+    const add = document.createElement('option');
+    add.value = '__new__';
+    add.textContent = specialText;
+    select.appendChild(add);
+  });
+}
 document.querySelectorAll('select').forEach(handleSpecialSelect);
+window.addEventListener('focus', function(){
+  refreshSelectOptions('suppliers');
+  refreshSelectOptions('products');
+  refreshSelectOptions('labels');
+});
 </script>
 </body>
 </html>

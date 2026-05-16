@@ -12,62 +12,66 @@
         <div class="topbar">
             <div>
                 <h1>進貨貼紙範本</h1>
-                <div class="subtitle">可建立多組進貨貼紙格式。進貨單的每個品項可選擇要套用哪一個範本。</div>
+                <div class="subtitle">上方新增或編輯範本；下方顯示已建立的貼紙範本列表。</div>
             </div>
             <div class="actions">
-                <form method="post" action="/settings/labels/new"><button class="btn-primary" type="submit">＋ 新增範本</button></form>
+                <a class="btn btn-outline" href="/settings/label-templates">清空表單 / 新增範本</a>
             </div>
         </div>
         <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
         <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
-        <div class="grid" style="grid-template-columns: 320px 1fr; align-items:start;">
-            <div class="card">
-                <div class="card-header">範本列表</div>
-                <div class="card-body">
-                    <table>
-                        <thead><tr><th>範本</th><th>預設</th></tr></thead>
-                        <tbody>
-                        <tr th:each="tpl : ${templates}">
-                            <td><a th:href="@{/settings/label-templates(settingId=${tpl.settingId})}" th:text="${tpl.templateName}"></a></td>
-                            <td th:text="${tpl.defaultTemplate} ? '是' : ''"></td>
-                        </tr>
-                        </tbody>
-                    </table>
+        <div class="card">
+            <div class="card-header" th:text="${editingExisting} ? '編輯貼紙範本' : '新增貼紙範本'">新增貼紙範本</div>
+            <div class="card-body">
+                <form method="post" action="/settings/labels" th:object="${setting}">
+                    <input type="hidden" th:field="*{settingId}">
+                    <div class="grid grid-4">
+                        <div><label>範本名稱</label><input th:field="*{templateName}" placeholder="例如：花盆貼紙 / 一般花材" required></div>
+                        <div><label>設為預設</label><select th:field="*{defaultTemplate}"><option value="false">否</option><option value="true">是</option></select></div>
+                        <div><label>標籤寬度 mm</label><input th:field="*{labelWidthMm}" type="number" step="0.1" placeholder="50"></div>
+                        <div><label>標籤高度 mm</label><input th:field="*{labelHeightMm}" type="number" step="0.1" placeholder="30"></div>
+                    </div>
+                    <div class="grid grid-4" style="margin-top:14px;">
+                        <div><label>上邊距 mm</label><input th:field="*{marginTopMm}" type="number" step="0.1" placeholder="3"></div>
+                        <div><label>左邊距 mm</label><input th:field="*{marginLeftMm}" type="number" step="0.1" placeholder="3"></div>
+                        <div><label>大字尺寸</label><input th:field="*{fontSizeLarge}" type="number" placeholder="11"></div>
+                        <div><label>一般字尺寸</label><input th:field="*{fontSizeNormal}" type="number" placeholder="8"></div>
+                    </div>
+                    <div class="grid grid-4" style="margin-top:14px;">
+                        <div><label>條碼寬度 mm</label><input th:field="*{barcodeWidthMm}" type="number" step="0.1" placeholder="38"></div>
+                        <div><label>條碼高度 mm</label><input th:field="*{barcodeHeightMm}" type="number" step="0.1" placeholder="7"></div>
+                        <div><label>顯示邊框</label><select th:field="*{showBorder}"><option value="true">是</option><option value="false">否</option></select></div>
+                        <div style="display:flex;align-items:end;"><button class="btn-primary" type="submit" th:text="${editingExisting} ? '儲存範本' : '新增範本'">新增範本</button></div>
+                    </div>
+                </form>
+                <form method="post" th:if="${editingExisting and setting.settingId != null and !setting.defaultTemplate}" th:action="@{'/settings/labels/' + ${setting.settingId} + '/delete'}" style="margin-top:12px;" onsubmit="return confirm('確定刪除此範本？')">
+                    <button class="btn-danger" type="submit">刪除範本</button>
+                </form>
+                <div class="alert alert-info" style="margin-top:16px;">
+                    精準對位方式：先確認標籤紙實際尺寸，輸入寬高後以 100% 實際大小列印測試。若文字偏上，增加上邊距；偏左，增加左邊距；條碼壓到文字，降低條碼高度或調整條碼寬度。不同 Windows / macOS 驅動可能有可列印邊界差異，需以實機微調。
                 </div>
             </div>
+        </div>
 
-            <div class="card">
-                <div class="card-header">範本設定</div>
-                <div class="card-body">
-                    <form method="post" action="/settings/labels" th:object="${setting}">
-                        <input type="hidden" th:field="*{settingId}">
-                        <div class="grid grid-4">
-                            <div><label>範本名稱</label><input th:field="*{templateName}" required></div>
-                            <div><label>設為預設</label><select th:field="*{defaultTemplate}"><option value="false">否</option><option value="true">是</option></select></div>
-                            <div><label>標籤寬度 mm</label><input th:field="*{labelWidthMm}" type="number" step="0.1"></div>
-                            <div><label>標籤高度 mm</label><input th:field="*{labelHeightMm}" type="number" step="0.1"></div>
-                        </div>
-                        <div class="grid grid-4" style="margin-top:14px;">
-                            <div><label>上邊距 mm</label><input th:field="*{marginTopMm}" type="number" step="0.1"></div>
-                            <div><label>左邊距 mm</label><input th:field="*{marginLeftMm}" type="number" step="0.1"></div>
-                            <div><label>大字尺寸</label><input th:field="*{fontSizeLarge}" type="number"></div>
-                            <div><label>一般字尺寸</label><input th:field="*{fontSizeNormal}" type="number"></div>
-                        </div>
-                        <div class="grid grid-4" style="margin-top:14px;">
-                            <div><label>條碼寬度 mm</label><input th:field="*{barcodeWidthMm}" type="number" step="0.1"></div>
-                            <div><label>條碼高度 mm</label><input th:field="*{barcodeHeightMm}" type="number" step="0.1"></div>
-                            <div><label>顯示邊框</label><select th:field="*{showBorder}"><option value="true">是</option><option value="false">否</option></select></div>
-                            <div style="display:flex;align-items:end;"><button class="btn-primary" type="submit">儲存範本</button></div>
-                        </div>
-                    </form>
-                    <form method="post" th:if="${setting.settingId != null and !setting.defaultTemplate}" th:action="@{'/settings/labels/' + ${setting.settingId} + '/delete'}" style="margin-top:12px;" onsubmit="return confirm('確定刪除此範本？')">
-                        <button class="btn-outline" type="submit">刪除範本</button>
-                    </form>
-                    <div class="alert alert-info">
-                        精準對位方式：先確認標籤紙實際尺寸，輸入寬高後列印測試。若文字偏上，增加「上邊距」；偏左，增加「左邊距」；條碼壓到文字，降低「條碼高度」或提高上邊距。不同標籤機驅動邊界不同，需在客戶 Windows 標籤機上以 100% 實際大小測試。
-                    </div>
-                </div>
+        <div class="card">
+            <div class="card-header">貼紙範本列表</div>
+            <div class="card-body">
+                <table>
+                    <thead><tr><th>範本名稱</th><th>尺寸</th><th>邊距</th><th>字級</th><th>條碼</th><th>預設</th><th>操作</th></tr></thead>
+                    <tbody>
+                    <tr th:each="tpl : ${templates}">
+                        <td th:text="${tpl.templateName}"></td>
+                        <td th:text="${tpl.labelWidthMm + ' x ' + tpl.labelHeightMm + ' mm'}"></td>
+                        <td th:text="${'上 ' + tpl.marginTopMm + ' / 左 ' + tpl.marginLeftMm + ' mm'}"></td>
+                        <td th:text="${'大 ' + tpl.fontSizeLarge + ' / 一般 ' + tpl.fontSizeNormal}"></td>
+                        <td th:text="${tpl.barcodeWidthMm + ' x ' + tpl.barcodeHeightMm + ' mm'}"></td>
+                        <td><span class="badge badge-success" th:if="${tpl.defaultTemplate}">預設</span></td>
+                        <td><a class="btn btn-outline" th:href="@{/settings/label-templates(settingId=${tpl.settingId})}">編輯</a></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(templates)}"><td colspan="7">尚未建立貼紙範本。請先在上方新增一筆範本。</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>

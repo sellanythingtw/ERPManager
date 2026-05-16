@@ -49,7 +49,8 @@
                         <td th:text="${order.totalQuantity}"></td>
                         <td th:text="${order.totalAmount}"></td>
                         <td>
-                            <a th:if="${order.pdfPath != null}" th:href="@{/local-file(path=${order.pdfPath})}" target="_blank">開啟 PDF</a>
+                            <a th:if="${order.pdfPath != null}" th:href="@{/local-file(path=${order.pdfPath})}" target="_blank">查看</a>
+                            <a th:if="${order.pdfPath != null}" th:href="@{/local-file/download(path=${order.pdfPath})}">下載</a>
                             <span th:if="${order.pdfPath == null}">-</span>
                         </td>
                         <td>

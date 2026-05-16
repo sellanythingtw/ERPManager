@@ -7,6 +7,7 @@ import com.sellanythingtw.inventory.repository.LabelPrintSettingRepository;
 import com.sellanythingtw.inventory.repository.PurchaseLotRepository;
 import com.sellanythingtw.inventory.utils.BarcodeUtils;
 import com.sellanythingtw.inventory.utils.FilesUtils;
+import com.sellanythingtw.inventory.utils.PdfFontUtils;
 import com.lowagie.text.Document;
 import com.lowagie.text.Image;
 import com.lowagie.text.Rectangle;
@@ -58,7 +59,6 @@ public class LabelPrintService {
     }
 
     public List<LabelPrintSetting> listTemplates() {
-        getDefaultTemplate();
         return settingRepository.findAllByOrderByDefaultTemplateDescSettingIdAsc();
     }
 
@@ -77,7 +77,8 @@ public class LabelPrintService {
 
     @Transactional
     public LabelPrintSetting updateSetting(LabelPrintSetting form) {
-        LabelPrintSetting setting = form.getSettingId() == null ? getDefaultTemplate() : getTemplate(form.getSettingId());
+        boolean creating = form.getSettingId() == null;
+        LabelPrintSetting setting = creating ? new LabelPrintSetting() : getTemplate(form.getSettingId());
         setting.setTemplateName(blankToDefault(form.getTemplateName(), "未命名範本"));
         setting.setLabelWidthMm(form.getLabelWidthMm());
         setting.setLabelHeightMm(form.getLabelHeightMm());
@@ -88,16 +89,21 @@ public class LabelPrintService {
         setting.setBarcodeWidthMm(form.getBarcodeWidthMm());
         setting.setBarcodeHeightMm(form.getBarcodeHeightMm());
         setting.setShowBorder(Boolean.TRUE.equals(form.getShowBorder()));
-        if (Boolean.TRUE.equals(form.getDefaultTemplate())) {
+        if (Boolean.TRUE.equals(form.getDefaultTemplate()) || settingRepository.count() == 0) {
             for (LabelPrintSetting existing : settingRepository.findAll()) {
                 existing.setDefaultTemplate(false);
                 settingRepository.save(existing);
             }
             setting.setDefaultTemplate(true);
-        } else if (setting.getDefaultTemplate() == null) {
+        } else if (setting.getDefaultTemplate() == null || creating) {
             setting.setDefaultTemplate(false);
         }
-        return settingRepository.save(setting);
+        LabelPrintSetting saved = settingRepository.save(setting);
+        if (settingRepository.findFirstByDefaultTemplateTrueOrderBySettingIdAsc().isEmpty()) {
+            saved.setDefaultTemplate(true);
+            saved = settingRepository.save(saved);
+        }
+        return saved;
     }
 
     @Transactional
@@ -207,15 +213,7 @@ public class LabelPrintService {
     }
 
     private BaseFont createBaseFont() {
-        try {
-            return BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
-        } catch (Exception ex) {
-            try {
-                return BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
-            } catch (Exception ignored) {
-                throw new RuntimeException("無法載入 PDF 字型");
-            }
-        }
+        return PdfFontUtils.baseFont();
     }
 
     private float mm(Double value) { return (float) ((value == null ? 0.0 : value) * 72.0 / 25.4); }

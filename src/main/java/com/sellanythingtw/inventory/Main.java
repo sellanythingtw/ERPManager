@@ -23,7 +23,7 @@ public class Main {
 
         MsgUtils.printMsg();
         MsgUtils.printMsg("歡迎來到 ERPManager 本地端進銷存系統！");
-        MsgUtils.printMsg("程式名稱: ERPManager, 程式版本: 0.3.7");
+        MsgUtils.printMsg("程式名稱: ERPManager, 程式版本: 0.3.8");
         MsgUtils.printMsg("系統模式: 本地 Java + SQLite");
         MsgUtils.printMsg();
 

@@ -17,8 +17,14 @@ public class LabelSettingController {
 
     @GetMapping({"/settings/labels", "/settings/label-templates"})
     public String labelSettings(@RequestParam(required = false) Long settingId, Model model) {
-        model.addAttribute("templates", labelPrintService.listTemplates());
-        model.addAttribute("setting", settingId == null ? labelPrintService.getDefaultTemplate() : labelPrintService.getTemplate(settingId));
+        var templates = labelPrintService.listTemplates();
+        LabelPrintSetting setting = settingId == null ? new LabelPrintSetting() : labelPrintService.getTemplate(settingId);
+        if (settingId == null && !templates.isEmpty()) {
+            setting.setDefaultTemplate(false);
+        }
+        model.addAttribute("templates", templates);
+        model.addAttribute("setting", setting);
+        model.addAttribute("editingExisting", settingId != null);
         return "settings/labels";
     }
 

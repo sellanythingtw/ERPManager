@@ -61,6 +61,7 @@
                         <div>
                             <label>貼紙範本</label>
                             <select name="labelSettingId" class="refresh-on-focus">
+                                <option value="" th:if="${#lists.isEmpty(labelTemplates)}">尚未建立貼紙範本</option>
                                 <option th:each="tpl : ${labelTemplates}" th:value="${tpl.settingId}" th:text="${tpl.templateName + (tpl.defaultTemplate ? '（預設）' : '')}"></option>
                                 <option value="__new__">＋ 新增進貨貼紙範本...</option>
                             </select>
@@ -88,7 +89,41 @@ function handleSpecialSelect(select){
     }
   });
 }
+async function refreshSelectOptions(type){
+  let url = '', selector = '', emptyLabel = '';
+  if (type === 'suppliers') { url='/api/options/suppliers'; selector='select[name="supplierId"]'; emptyLabel='未指定，稍後再選'; }
+  if (type === 'products') { url='/api/options/products'; selector='select[name="productId"]'; emptyLabel='不新增品項，稍後再加'; }
+  if (type === 'labels') { url='/api/options/label-templates'; selector='select[name="labelSettingId"]'; emptyLabel='尚未建立貼紙範本'; }
+  if (!url) return;
+  const list = await fetch(url).then(r => r.json()).catch(() => null);
+  if (!list) return;
+  document.querySelectorAll(selector).forEach(select => {
+    const current = select.value;
+    const specialText = type === 'suppliers' ? '＋ 新增供應商...' : (type === 'products' ? '＋ 新增產品...' : '＋ 新增進貨貼紙範本...');
+    select.innerHTML = '';
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = list.length === 0 && type === 'labels' ? '尚未建立貼紙範本' : emptyLabel;
+    select.appendChild(empty);
+    list.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.label;
+      if (String(current) === String(item.id)) opt.selected = true;
+      select.appendChild(opt);
+    });
+    const add = document.createElement('option');
+    add.value = '__new__';
+    add.textContent = specialText;
+    select.appendChild(add);
+  });
+}
 document.querySelectorAll('select').forEach(handleSpecialSelect);
+window.addEventListener('focus', function(){
+  refreshSelectOptions('suppliers');
+  refreshSelectOptions('products');
+  refreshSelectOptions('labels');
+});
 </script>
 </body>
 </html>

@@ -3,6 +3,7 @@ package com.sellanythingtw.inventory.service;
 import com.sellanythingtw.inventory.config.AppProperties;
 import com.sellanythingtw.inventory.entity.*;
 import com.sellanythingtw.inventory.utils.FilesUtils;
+import com.sellanythingtw.inventory.utils.PdfFontUtils;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfPCell;
@@ -212,12 +213,7 @@ public class PdfService {
     }
 
     private Font font(int size, int style) {
-        try {
-            BaseFont bf = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
-            return new Font(bf, size, style);
-        } catch (Exception ignored) {
-            return new Font(Font.HELVETICA, size, style);
-        }
+        return PdfFontUtils.font(size, style);
     }
 
     private PdfPCell cleanCell(Phrase phrase) {

@@ -16,12 +16,12 @@
             </div>
             <div class="actions">
                 <a class="btn btn-outline" href="/sales">銷貨單列表</a>
-                <a class="btn btn-primary" th:if="${!editMode and order.status != 'VOID'}" th:href="@{'/sales/' + ${order.salesId} + '?edit=true'}">編輯單據</a>
-                <a class="btn btn-outline" th:if="${editMode}" th:href="@{'/sales/' + ${order.salesId}}">取消編輯</a>
                 <a class="btn btn-primary" href="/sales/new">新增銷貨單</a>
                 <form method="post" th:if="${order.status == 'DRAFT' and editMode}" th:action="@{'/sales/' + ${order.salesId} + '/delete-draft'}" onsubmit="return confirm('確定刪除此草稿？此動作無法復原。')"><button class="btn-danger" type="submit">刪除草稿</button></form>
                 <form method="post" th:if="${order.status == 'CONFIRMED'}" th:action="@{'/sales/' + ${order.salesId} + '/void'}" onsubmit="return confirm('確定作廢此銷貨單？作廢後仍可恢復。')"><button class="btn-danger" type="submit">作廢單據</button></form>
                 <form method="post" th:if="${order.status == 'VOID'}" th:action="@{'/sales/' + ${order.salesId} + '/restore'}" onsubmit="return confirm('確定恢復此銷貨單？')"><button class="btn-primary" type="submit">恢復單據</button></form>
+                <a class="btn btn-primary" th:if="${!editMode and order.status != 'VOID'}" th:href="@{'/sales/' + ${order.salesId} + '?edit=true'}">編輯單據</a>
+                <a class="btn btn-outline" th:if="${editMode}" th:href="@{'/sales/' + ${order.salesId}}">取消編輯</a>
             </div>
         </div>
 
@@ -128,7 +128,11 @@
                     <div><label>付款類型</label><input th:value="${order.paymentType}" readonly></div>
                     <div><label>付款狀態</label><input th:value="${order.paymentStatus}" readonly></div>
                 </div>
-                <div class="alert alert-info" th:if="${order.pdfPath != null}">銷貨單 PDF：<a th:href="@{/local-file(path=${order.pdfPath})}" target="_blank" th:text="${order.pdfPath}"></a></div>
+                <div class="actions" style="margin-top:16px;" th:if="${order.pdfPath != null}">
+                    <a class="btn btn-primary" th:href="@{/local-file/print(path=${order.pdfPath})}" target="_blank">列印 PDF</a>
+                    <a class="btn btn-outline" th:href="@{/local-file/download(path=${order.pdfPath})}">下載 PDF</a>
+                    <a class="btn btn-outline" th:href="@{/local-file/open-folder(path=${order.pdfPath}, back=${'/sales/' + order.salesId})}">打開資料夾</a>
+                </div>
             </div>
         </div>
     </main>
