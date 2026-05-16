@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 18780
   address: 127.0.0.1
 
 spring:
@@ -21,7 +21,7 @@ spring:
 
 inventory:
   app-name: ERPManager 本地端進銷存系統
-  version: 0.3.8
+  version: 0.3.9
   base-dir: ./app
   pdf-dir: ./app/files/pdf
   label-dir: ./app/files/labels
