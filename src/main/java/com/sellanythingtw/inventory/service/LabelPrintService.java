@@ -89,6 +89,24 @@ public class LabelPrintService {
         setting.setBarcodeWidthMm(form.getBarcodeWidthMm());
         setting.setBarcodeHeightMm(form.getBarcodeHeightMm());
         setting.setShowBorder(Boolean.TRUE.equals(form.getShowBorder()));
+        setting.setPriceX(form.getPriceX());
+        setting.setPriceY(form.getPriceY());
+        setting.setTrayX(form.getTrayX());
+        setting.setTrayY(form.getTrayY());
+        setting.setSizeX(form.getSizeX());
+        setting.setSizeY(form.getSizeY());
+        setting.setDateX(form.getDateX());
+        setting.setDateY(form.getDateY());
+        setting.setProductNameX(form.getProductNameX());
+        setting.setProductNameY(form.getProductNameY());
+        setting.setSaleAliasX(form.getSaleAliasX());
+        setting.setSaleAliasY(form.getSaleAliasY());
+        setting.setSupplierCodeX(form.getSupplierCodeX());
+        setting.setSupplierCodeY(form.getSupplierCodeY());
+        setting.setBarcodeX(form.getBarcodeX());
+        setting.setBarcodeY(form.getBarcodeY());
+        setting.setBarcodeTextX(form.getBarcodeTextX());
+        setting.setBarcodeTextY(form.getBarcodeTextY());
         if (Boolean.TRUE.equals(form.getDefaultTemplate()) || settingRepository.count() == 0) {
             for (LabelPrintSetting existing : settingRepository.findAll()) {
                 existing.setDefaultTemplate(false);
@@ -185,24 +203,39 @@ public class LabelPrintService {
             cb.restoreState();
         }
 
-        drawText(cb, font, String.valueOf(nvl(lot.getWholesalePrice())), left, top, large, PdfContentByte.ALIGN_LEFT, 8);
-        drawText(cb, font, nvl(lot.getTrayQuantityCode()), width * 0.58f, top, normal + 1, PdfContentByte.ALIGN_LEFT, 8);
-        drawText(cb, font, nvl(lot.getSizeCode()).toUpperCase(), right, top, normal + 1, PdfContentByte.ALIGN_RIGHT, 8);
-        drawText(cb, font, nvl(lot.getPurchaseDateCode()), left, top - mm(5.0), normal, PdfContentByte.ALIGN_LEFT, 8);
-        drawText(cb, font, nvl(lot.getProductName()), left, top - mm(9.2), normal + 0.8f, PdfContentByte.ALIGN_LEFT, 18);
-        drawText(cb, font, "新品" + nvl(lot.getSalePrice()) + "元 " + nvl(lot.getProductAlias()), left, top - mm(13.0), normal, PdfContentByte.ALIGN_LEFT, 18);
-        drawText(cb, font, nvl(lot.getSupplierCode()), left, top - mm(16.8), normal, PdfContentByte.ALIGN_LEFT, 12);
+        float priceX = pos(setting.getPriceX(), left);
+        float priceY = pos(setting.getPriceY(), top);
+        float trayX = pos(setting.getTrayX(), width * 0.58f);
+        float trayY = pos(setting.getTrayY(), top);
+        float sizeX = pos(setting.getSizeX(), right);
+        float sizeY = pos(setting.getSizeY(), top);
+        float dateX = pos(setting.getDateX(), left);
+        float dateY = pos(setting.getDateY(), top - mm(5.0));
+        float productX = pos(setting.getProductNameX(), left);
+        float productY = pos(setting.getProductNameY(), top - mm(9.2));
+        float saleAliasX = pos(setting.getSaleAliasX(), left);
+        float saleAliasY = pos(setting.getSaleAliasY(), top - mm(13.0));
+        float supplierX = pos(setting.getSupplierCodeX(), left);
+        float supplierY = pos(setting.getSupplierCodeY(), top - mm(16.8));
+
+        drawText(cb, font, String.valueOf(nvl(lot.getWholesalePrice())), priceX, priceY, large, PdfContentByte.ALIGN_LEFT, 8);
+        drawText(cb, font, nvl(lot.getTrayQuantityCode()), trayX, trayY, normal + 1, PdfContentByte.ALIGN_LEFT, 8);
+        drawText(cb, font, nvl(lot.getSizeCode()).toUpperCase(), sizeX, sizeY, normal + 1, PdfContentByte.ALIGN_RIGHT, 8);
+        drawText(cb, font, nvl(lot.getPurchaseDateCode()), dateX, dateY, normal, PdfContentByte.ALIGN_LEFT, 8);
+        drawText(cb, font, nvl(lot.getProductName()), productX, productY, normal + 0.8f, PdfContentByte.ALIGN_LEFT, 18);
+        drawText(cb, font, "新品" + nvl(lot.getSalePrice()) + "元 " + nvl(lot.getProductAlias()), saleAliasX, saleAliasY, normal, PdfContentByte.ALIGN_LEFT, 18);
+        drawText(cb, font, nvl(lot.getSupplierCode()), supplierX, supplierY, normal, PdfContentByte.ALIGN_LEFT, 12);
 
         float barcodeW = Math.min(mm(setting.getBarcodeWidthMm()), width - left - mm(3.0));
         float barcodeH = Math.min(mm(setting.getBarcodeHeightMm()), Math.max(mm(5.5), height * 0.21f));
-        float barcodeX = left;
-        float barcodeY = mm(5.4);
+        float barcodeX = pos(setting.getBarcodeX(), left);
+        float barcodeY = pos(setting.getBarcodeY(), mm(5.4));
         byte[] barcodePng = BarcodeUtils.createCode128Png(lot.getBarcodeValue(), 520, 90);
         Image image = Image.getInstance(barcodePng);
         image.scaleToFit(barcodeW, barcodeH);
         image.setAbsolutePosition(barcodeX, barcodeY);
         cb.addImage(image);
-        drawText(cb, font, nvl(lot.getBarcodeValue()), barcodeX, mm(2.2), small, PdfContentByte.ALIGN_LEFT, 18);
+        drawText(cb, font, nvl(lot.getBarcodeValue()), pos(setting.getBarcodeTextX(), barcodeX), pos(setting.getBarcodeTextY(), mm(2.2)), small, PdfContentByte.ALIGN_LEFT, 18);
     }
 
     private void drawText(PdfContentByte cb, BaseFont font, String text, float x, float y, float size, int align, int max) {
@@ -217,6 +250,7 @@ public class LabelPrintService {
     }
 
     private float mm(Double value) { return (float) ((value == null ? 0.0 : value) * 72.0 / 25.4); }
+    private float pos(Double mmValue, float fallback) { return mmValue == null ? fallback : mm(mmValue); }
     private String nvl(Object value) { return value == null ? "" : String.valueOf(value); }
     private int safe(Integer value) { return value == null ? 0 : value; }
     private float safeFont(Integer value, int fallback) { return value == null || value <= 0 ? fallback : value; }

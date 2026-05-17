@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.awt.Desktop;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -50,16 +49,23 @@ public class FileViewController {
         try {
             Path target = validatePath(path);
             Path folder = Files.isDirectory(target) ? target : target.getParent();
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().open(folder.toFile());
-                redirectAttributes.addFlashAttribute("successMessage", "已嘗試開啟資料夾：" + folder);
-            } else {
-                redirectAttributes.addFlashAttribute("errorMessage", "目前系統不支援直接開啟資料夾。資料夾位置：" + folder);
-            }
+            openFolderByOs(folder);
+            redirectAttributes.addFlashAttribute("successMessage", "已嘗試開啟資料夾：" + folder);
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "開啟資料夾失敗：" + ex.getMessage());
         }
         return "redirect:" + back;
+    }
+
+    private void openFolderByOs(Path folder) throws Exception {
+        String os = System.getProperty("os.name", "").toLowerCase();
+        if (os.contains("mac")) {
+            new ProcessBuilder("open", folder.toString()).start();
+        } else if (os.contains("win")) {
+            new ProcessBuilder("explorer.exe", folder.toString()).start();
+        } else {
+            new ProcessBuilder("xdg-open", folder.toString()).start();
+        }
     }
 
     private ResponseEntity<Resource> fileResponse(String path, boolean inline) throws Exception {

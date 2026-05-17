@@ -44,6 +44,23 @@
                         <div><label>顯示邊框</label><select th:field="*{showBorder}"><option value="true">是</option><option value="false">否</option></select></div>
                         <div style="display:flex;align-items:end;"><button class="btn-primary" type="submit" th:text="${editingExisting} ? '儲存範本' : '新增範本'">新增範本</button></div>
                     </div>
+
+                    <div class="card" style="box-shadow:none; margin-top:18px;">
+                        <div class="card-header">精準座標設定</div>
+                        <div class="card-body">
+                            <div class="alert alert-info">以下座標單位為 mm，原點為貼紙左下角。空白時使用系統預設位置。要讓文字往右，增加 X；往上，增加 Y。</div>
+                            <table>
+                                <thead><tr><th>欄位</th><th>X</th><th>Y</th><th>欄位</th><th>X</th><th>Y</th></tr></thead>
+                                <tbody>
+                                <tr><td>批發價</td><td><input th:field="*{priceX}" type="number" step="0.1"></td><td><input th:field="*{priceY}" type="number" step="0.1"></td><td>P</td><td><input th:field="*{trayX}" type="number" step="0.1"></td><td><input th:field="*{trayY}" type="number" step="0.1"></td></tr>
+                                <tr><td>尺寸</td><td><input th:field="*{sizeX}" type="number" step="0.1"></td><td><input th:field="*{sizeY}" type="number" step="0.1"></td><td>進貨日期</td><td><input th:field="*{dateX}" type="number" step="0.1"></td><td><input th:field="*{dateY}" type="number" step="0.1"></td></tr>
+                                <tr><td>品名</td><td><input th:field="*{productNameX}" type="number" step="0.1"></td><td><input th:field="*{productNameY}" type="number" step="0.1"></td><td>售價+小名</td><td><input th:field="*{saleAliasX}" type="number" step="0.1"></td><td><input th:field="*{saleAliasY}" type="number" step="0.1"></td></tr>
+                                <tr><td>供應商代號</td><td><input th:field="*{supplierCodeX}" type="number" step="0.1"></td><td><input th:field="*{supplierCodeY}" type="number" step="0.1"></td><td>條碼圖</td><td><input th:field="*{barcodeX}" type="number" step="0.1"></td><td><input th:field="*{barcodeY}" type="number" step="0.1"></td></tr>
+                                <tr><td>條碼號碼</td><td><input th:field="*{barcodeTextX}" type="number" step="0.1"></td><td><input th:field="*{barcodeTextY}" type="number" step="0.1"></td><td colspan="3"></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </form>
                 <form method="post" th:if="${editingExisting and setting.settingId != null and !setting.defaultTemplate}" th:action="@{'/settings/labels/' + ${setting.settingId} + '/delete'}" style="margin-top:12px;" onsubmit="return confirm('確定刪除此範本？')">
                     <button class="btn-danger" type="submit">刪除範本</button>
