@@ -14,19 +14,19 @@
                 <h1>新增進貨單</h1>
                 <div class="subtitle">直接進入完整表單；供應商與品項可先空白，儲存草稿後留在進貨單列表。</div>
             </div>
-            <div class="actions"><a class="btn btn-outline" href="/purchases">返回進貨單列表</a></div>
+            <div class="actions"><a class="btn btn-outline" href="/purchases">取消新增</a></div>
         </div>
         <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
         <form method="post" action="/purchases/create-full">
-            <div class="card">
+            <div class="card doc-section-card">
                 <div class="card-header">單據表頭</div>
                 <div class="card-body">
                     <div class="grid grid-4">
                         <div><label>進貨日期</label><input type="date" name="purchaseDate" th:value="${#temporals.format(today, 'yyyy-MM-dd')}"></div>
                         <div>
-                            <label>供應商</label>
-                            <select name="supplierId" class="refresh-on-focus">
+                            <label class="required-label">供應商</label>
+                            <select name="supplierId" data-required="true" required class="refresh-on-focus">
                                 <option value="">未指定，稍後再選</option>
                                 <option th:each="s : ${suppliers}" th:value="${s.supplierId}" th:text="${s.supplierName}"></option>
                                 <option value="__new__">＋ 新增供應商...</option>
@@ -38,7 +38,7 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card doc-section-card">
                 <div class="card-header">進貨品項</div>
                 <div class="card-body">
                     <div class="alert alert-info">可先不選品項直接儲存草稿；若下拉選單資料不足，可於新分頁新增後回到此頁重新整理。</div>
@@ -66,13 +66,14 @@
                                 <option value="__new__">＋ 新增進貨貼紙範本...</option>
                             </select>
                         </div>
+                        <div><label>品項備註</label><input name="itemNote" placeholder="此品項備註"></div>
                     </div>
                 </div>
             </div>
 
             <div class="actions">
-                <button class="btn-primary" name="action" value="draft" type="submit">儲存草稿</button>
-                <button class="btn-outline" name="action" value="confirm" type="submit" onclick="return confirm('確認進貨後會建立批次、條碼並增加庫存，是否繼續？')">儲存並確認進貨</button>
+                <button class="btn btn-primary" name="action" value="draft" type="submit">儲存草稿</button>
+                <button class="btn btn-outline" name="action" value="confirm" type="submit" onclick="return confirm('確認進貨後會建立批次、條碼並增加庫存，是否繼續？')">儲存並確認進貨</button>
             </div>
         </form>
     </main>
@@ -125,5 +126,6 @@ window.addEventListener('focus', function(){
   refreshSelectOptions('labels');
 });
 </script>
+<script src="/js/lookup-modal.js"></script>
 </body>
 </html>

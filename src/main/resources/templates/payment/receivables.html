@@ -12,11 +12,9 @@
         <div class="topbar">
             <div>
                 <h1>沖帳管理</h1>
-                <div class="subtitle">查詢欠款、部分收款與已沖帳銷貨單，並可將欠款改為現金或轉帳。</div>
+                <div class="subtitle">查詢銷貨單帳款狀態；狀態以未收金額判斷。</div>
             </div>
-            <div>
-                <button class="btn-outline" onclick="window.print()">列印目前列表</button>
-            </div>
+
         </div>
 
         <div class="alert alert-info" th:if="${param.received}">沖帳完成。</div>
@@ -24,21 +22,20 @@
         <div class="card no-print">
             <div class="card-header">篩選條件</div>
             <div class="card-body">
-                <form method="get" action="/payments/receivables">
+                <form method="get" action="/payments/receivables" class="search-form">
                     <div class="grid grid-4">
-                        <div><label>客戶代號</label><input name="customerCode" th:value="${customerCode}" placeholder="例如 C000001"></div>
-                        <div><label>客戶名稱</label><input name="customerName" th:value="${customerName}" placeholder="輸入客戶名稱"></div>
+                        <div><label>客戶代號</label><input name="customerCode" data-lookup="customers" data-fill="code" th:value="${customerCode}" placeholder="例如 C000001"></div>
+                        <div><label>客戶名稱</label><input name="customerName" data-lookup="customers" data-fill="name" th:value="${customerName}" placeholder="輸入客戶名稱"></div>
                         <div><label>起始日期</label><input type="date" name="dateFrom" th:value="${dateFrom}"></div>
                         <div><label>結束日期</label><input type="date" name="dateTo" th:value="${dateTo}"></div>
                     </div>
-                    <div class="grid grid-4" style="margin-top:14px;">
+                    <div class="grid grid-4">
                         <div>
-                            <label>款項狀態</label>
+                            <label>帳款狀態</label>
                             <select name="paymentStatus">
                                 <option value="" th:selected="${paymentStatus == null || paymentStatus == ''}">全部</option>
-                                <option value="UNPAID" th:selected="${paymentStatus == 'UNPAID'}">未收款</option>
-                                <option value="PARTIAL" th:selected="${paymentStatus == 'PARTIAL'}">部分收款</option>
-                                <option value="PAID" th:selected="${paymentStatus == 'PAID'}">已沖帳</option>
+                                <option value="PAID" th:selected="${paymentStatus == 'PAID'}">付清</option>
+                                <option value="DEBT" th:selected="${paymentStatus == 'DEBT' || paymentStatus == 'UNPAID'}">欠款</option>
                             </select>
                         </div>
                         <div>
@@ -50,19 +47,25 @@
                                 <option value="CREDIT" th:selected="${paymentType == 'CREDIT'}">欠款</option>
                             </select>
                         </div>
-                        <div style="display:flex;align-items:end;gap:10px;">
-                            <button class="btn-primary" type="submit">查詢</button>
-                            <a class="btn btn-outline" href="/payments/receivables">清除</a>
-                        </div>
+                    </div>
+                    <div class="actions form-actions-separated">
+                        <button class="btn btn-primary" type="submit">查詢</button>
+                        <a class="btn btn-outline" href="/payments/receivables">清除</a>
                     </div>
                 </form>
             </div>
         </div>
 
         <div class="card">
-            <div class="card-header">款項列表</div>
-            <div class="card-body">
-                <table>
+            <div class="card-header with-actions">
+                <span>帳款列表</span>
+                <div class="actions no-print">
+                    <button class="btn btn-outline btn-compact" type="button" onclick="window.print()">列印</button>
+                    <button class="btn btn-primary btn-compact" type="button" onclick="downloadTableCsv('paymentReceivablesTable', '帳款列表.csv')">下載</button>
+                </div>
+            </div>
+            <div class="card-body table-scroll vertical-scroll">
+                <table id="paymentReceivablesTable" class="resizable-table" data-table-key="payment-receivables">
                     <thead>
                     <tr>
                         <th>銷貨單號</th>
@@ -75,41 +78,32 @@
                         <th>付款類型</th>
                         <th>狀態</th>
                         <th>最近收款</th>
-                        <th class="no-print">沖帳</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="row : ${rows}">
-                        <td th:text="${row.order.salesNo}"></td>
+                        <td><a th:href="@{'/sales/' + ${row.order.salesId} + '?edit=true'}" th:text="${row.order.salesNo}"></a></td>
                         <td th:text="${row.order.salesDate}"></td>
                         <td th:text="${row.customer != null ? row.customer.customerCode : ''}"></td>
                         <td th:text="${row.customer != null ? row.customer.customerName : '未指定'}"></td>
                         <td th:text="${row.order.totalAmount}"></td>
                         <td th:text="${row.order.paidAmount}"></td>
                         <td th:text="${row.order.unpaidAmount}"></td>
-                        <td th:text="${row.order.paymentType}"></td>
-                        <td th:text="${row.order.paymentStatus}"></td>
-                        <td th:text="${row.lastPaymentDate}"></td>
-                        <td class="no-print">
-                            <form method="post" th:action="@{'/payments/' + ${row.order.salesId} + '/receive'}" th:if="${row.order.unpaidAmount != null && row.order.unpaidAmount > 0}" style="display:grid;grid-template-columns:90px 100px 120px 1fr auto;gap:8px;align-items:center;">
-                                <select name="method">
-                                    <option value="CASH">現金</option>
-                                    <option value="TRANSFER">轉帳</option>
-                                </select>
-                                <input name="amount" type="number" step="1" min="1" th:max="${row.order.unpaidAmount}" th:value="${row.order.unpaidAmount}">
-                                <input name="paymentDate" type="date" th:value="${today}">
-                                <input name="note" placeholder="備註">
-                                <button class="btn-primary" type="submit">沖帳</button>
-                            </form>
-                            <span th:if="${row.order.unpaidAmount == null || row.order.unpaidAmount <= 0}">已完成</span>
+                        <td th:text="${row.order.paymentType == 'CASH' ? '現金' : (row.order.paymentType == 'TRANSFER' ? '轉帳' : (row.order.paymentType == 'CREDIT' ? '欠款' : row.order.paymentType))}"></td>
+                        <td>
+                            <span th:class="${row.order.unpaidAmount == null || row.order.unpaidAmount <= 0 ? 'badge badge-success' : 'badge badge-danger'}"
+                                  th:text="${row.order.unpaidAmount == null || row.order.unpaidAmount <= 0 ? '付清' : '欠款'}"></span>
                         </td>
+                        <td th:text="${row.lastPaymentDate}"></td>
                     </tr>
-                    <tr th:if="${#lists.isEmpty(rows)}"><td colspan="11">無符合條件資料</td></tr>
+                    <tr th:if="${#lists.isEmpty(rows)}"><td colspan="10">無符合條件資料</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 </div>
+<script src="/js/lookup-modal.js"></script>
+<script src="/js/table-tools.js"></script>
 </body>
 </html>

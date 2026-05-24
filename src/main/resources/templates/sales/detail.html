@@ -14,25 +14,45 @@
                 <h1>銷貨單明細</h1>
                 <div class="subtitle">刷入進貨貼紙條碼，輸入數量，確認後扣除對應批次庫存。</div>
             </div>
-            <div class="actions">
-                <a class="btn btn-outline" href="/sales">銷貨單列表</a>
-                <a class="btn btn-primary" href="/sales/new">新增銷貨單</a>
-                <form method="post" th:if="${order.status == 'DRAFT' and editMode}" th:action="@{'/sales/' + ${order.salesId} + '/delete-draft'}" onsubmit="return confirm('確定刪除此草稿？此動作無法復原。')"><button class="btn-danger" type="submit">刪除草稿</button></form>
-                <form method="post" th:if="${order.status == 'CONFIRMED'}" th:action="@{'/sales/' + ${order.salesId} + '/void'}" onsubmit="return confirm('確定作廢此銷貨單？作廢後仍可恢復。')"><button class="btn-danger" type="submit">作廢單據</button></form>
-                <form method="post" th:if="${order.status == 'VOID'}" th:action="@{'/sales/' + ${order.salesId} + '/restore'}" onsubmit="return confirm('確定恢復此銷貨單？')"><button class="btn-primary" type="submit">恢復單據</button></form>
+            <div class="actions purchase-top-actions">
+                <a class="btn btn-outline" th:if="${!editMode}" href="/sales">返回列表</a>
                 <a class="btn btn-primary" th:if="${!editMode and order.status != 'VOID'}" th:href="@{'/sales/' + ${order.salesId} + '?edit=true'}">編輯單據</a>
                 <a class="btn btn-outline" th:if="${editMode}" th:href="@{'/sales/' + ${order.salesId}}">取消編輯</a>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">單據資訊</div>
+        <div class="card doc-section-card">
+            <div class="card-header with-actions">
+                <span>單據資訊</span>
+                <div class="actions title-actions">
+                    <form method="post" th:if="${order.status == 'DRAFT' and editMode}" th:action="@{'/sales/' + ${order.salesId} + '/delete-draft'}" onsubmit="return confirm('確定刪除此草稿？此動作無法復原。')"><button class="btn btn-danger" type="submit">刪除草稿</button></form>
+                    <form method="post" th:if="${order.status == 'CONFIRMED'}" th:action="@{'/sales/' + ${order.salesId} + '/void'}" onsubmit="return confirm('確定作廢此銷貨單？作廢後仍可恢復。')"><button class="btn btn-danger" type="submit">作廢</button></form>
+                    <form method="post" th:if="${order.status == 'VOID'}" th:action="@{'/sales/' + ${order.salesId} + '/restore'}" onsubmit="return confirm('確定恢復此銷貨單？')"><button class="btn btn-primary" type="submit">恢復</button></form>
+                </div>
+            </div>
             <div class="card-body">
-                <div class="grid grid-4">
-                    <div><label>銷貨單號</label><input th:value="${order.salesNo}" readonly></div>
-                    <div><label>銷貨日期</label><input th:value="${order.salesDate}" readonly></div>
-                    <div><label>客戶</label><input th:value="${customer != null ? customer.customerName : '未指定'}" readonly></div>
-                    <div><label>狀態</label><input th:value="${order.status == 'CONFIRMED' ? '已確認' : (order.status == 'VOID' ? '已作廢' : '草稿')}" readonly></div>
+                <form id="salesHeaderForm" method="post" th:if="${editMode and order.status != 'VOID'}" th:action="@{'/sales/' + ${order.salesId} + '/header'}">
+                    <div class="grid grid-4">
+                        <div><label>銷貨單號</label><input class="readonly-field" th:value="${order.salesNo}" readonly></div>
+                        <div><label>銷貨日期</label><input type="date" name="salesDate" th:value="${order.salesDate}"></div>
+                        <div>
+                            <label class="required-label">客戶代號</label>
+                            <input id="customerId" name="customerId" type="hidden" data-required-lookup="true" data-error-target="salesCustomerCode" th:value="${order.customerId}">
+                            <input id="salesCustomerCode" data-lookup="customers" data-fill="code" data-target-id="customerId" data-pair-code="salesCustomerCode" data-pair-name="salesCustomerName" th:value="${customer != null ? customer.customerCode : ''}" placeholder="輸入後雙擊查詢">
+                        </div>
+                        <div>
+                            <label class="required-label">客戶名稱</label>
+                            <input id="salesCustomerName" data-lookup="customers" data-fill="name" data-target-id="customerId" data-pair-code="salesCustomerCode" data-pair-name="salesCustomerName" th:value="${customer != null ? customer.customerName : ''}" placeholder="輸入後雙擊查詢">
+                        </div>
+                        <div><label>狀態</label><input class="readonly-field" th:value="${order.status == 'CONFIRMED' ? '已確認' : (order.status == 'VOID' ? '已作廢' : '草稿')}" readonly></div>
+                    </div>
+                </form>
+                <div class="grid grid-4" th:if="${!(editMode and order.status != 'VOID')}">
+                    <div><label>銷貨單號</label><input class="readonly-field" th:value="${order.salesNo}" readonly></div>
+                    <div><label>銷貨日期</label><input class="readonly-field" th:value="${order.salesDate}" readonly></div>
+                    <div><label>客戶代號</label><input class="readonly-field" th:value="${customer != null ? customer.customerCode : ''}" readonly></div>
+                    <div><label>客戶名稱</label><input class="readonly-field" th:value="${customer != null ? customer.customerName : '未指定'}" readonly></div>
+                    <div><label>狀態</label><input class="readonly-field" th:value="${order.status == 'CONFIRMED' ? '已確認' : (order.status == 'VOID' ? '已作廢' : '草稿')}" readonly></div>
                 </div>
             </div>
         </div>
@@ -40,7 +60,7 @@
         <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
         <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
-        <div class="card" th:if="${order.status == 'DRAFT' and editMode}">
+        <div class="card doc-section-card" th:if="${order.status == 'DRAFT' and editMode}">
             <div class="card-header">條碼掃描輸入</div>
             <div class="card-body">
                 <div class="grid grid-4">
@@ -56,19 +76,20 @@
                     <div class="grid grid-4">
                         <div><label>確認條碼</label><input id="barcodeValue" name="barcodeValue" required readonly></div>
                         <div><label>銷貨數量</label><input id="quantityInput" name="quantity" type="number" min="1" value="1" required></div>
-                        <div style="display:flex;align-items:end;"><button class="btn-primary" type="submit">加入銷貨明細</button></div>
+                        <div><label>品項備註</label><input name="itemNote" placeholder="此品項備註"></div>
+                        <div style="display:flex;align-items:end;"><button class="btn btn-primary" type="submit">加入銷貨明細</button></div>
                     </div>
                 </form>
                 <div id="scanMsg" class="alert alert-info">每次刷入條碼後，請先輸入數量並加入明細，再刷下一筆。</div>
             </div>
         </div>
 
-        <div class="card">
+        <div class="card doc-section-card">
             <div class="card-header">銷貨明細</div>
             <div class="card-body">
                 <table>
                     <thead>
-                    <tr><th>#</th><th>條碼</th><th>品號</th><th>品名</th><th>小名</th><th>供應商</th><th>進貨日</th><th>單價</th><th>數量</th><th>小計</th><th th:if="${order.status == 'DRAFT' and editMode}">操作</th></tr>
+                    <tr><th>#</th><th>條碼</th><th>品號</th><th>品名</th><th>小名</th><th>供應商</th><th>進貨日</th><th>單價</th><th>數量</th><th>品項備註</th><th>小計</th><th th:if="${order.status == 'DRAFT' and editMode}">操作</th></tr>
                     </thead>
                     <tbody>
                     <tr th:each="item, st : ${items}">
@@ -81,10 +102,11 @@
                         <td th:text="${item.purchaseDate}"></td>
                         <td th:text="${item.unitPrice}"></td>
                         <td th:text="${item.quantity}"></td>
+                        <td th:text="${item.itemNote}"></td>
                         <td th:text="${item.amount}"></td>
                         <td th:if="${order.status == 'DRAFT'}">
                             <form method="post" th:action="@{'/sales/' + ${order.salesId} + '/items/' + ${item.itemId} + '/delete'}">
-                                <button class="btn-outline" type="submit">刪除</button>
+                                <button class="btn btn-outline" type="submit">刪除</button>
                             </form>
                         </td>
                     </tr>
@@ -103,8 +125,8 @@
         <div class="card" th:if="${order.status == 'DRAFT' and editMode}">
             <div class="card-header">確認銷貨與付款類型</div>
             <div class="card-body">
-                <form method="post" th:action="@{'/sales/' + ${order.salesId} + '/confirm'}" onsubmit="return confirm('確認銷貨後會扣除批次庫存，是否繼續？')">
-                    <div class="grid grid-3">
+                <form id="confirmSalesForm" method="post" th:action="@{'/sales/' + ${order.salesId} + '/confirm'}">
+                    <div class="grid grid-4">
                         <div>
                             <label>付款類型</label>
                             <select name="paymentType">
@@ -113,20 +135,30 @@
                                 <option value="CREDIT">欠款</option>
                             </select>
                         </div>
-                        <div style="display:flex;align-items:end;"><button class="btn-primary" type="submit">確認銷貨並扣庫</button></div>
+                        <div>
+                            <label>付款狀況</label>
+                            <select name="paymentStatus">
+                                <option value="PAID">已付款</option>
+                                <option value="UNPAID">待付款</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="page-bottom-actions">
+                        <button class="btn btn-primary" type="submit" th:formaction="@{'/sales/' + ${order.salesId} + '/header'}">儲存草稿</button>
+                        <button class="btn btn-outline" type="submit" onclick="return confirm('確認銷貨後會扣除批次庫存，是否繼續？')">儲存並確認銷貨</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div class="card" th:if="${order.status == 'CONFIRMED'}">
+        <div class="card" th:if="${order.status == 'CONFIRMED' and !editMode}">
             <div class="card-header">確認結果</div>
             <div class="card-body">
                 <div class="grid grid-4">
                     <div><label>總數量</label><input th:value="${order.totalQuantity}" readonly></div>
                     <div><label>總金額</label><input th:value="${order.totalAmount}" readonly></div>
-                    <div><label>付款類型</label><input th:value="${order.paymentType}" readonly></div>
-                    <div><label>付款狀態</label><input th:value="${order.paymentStatus}" readonly></div>
+                    <div><label>付款類型</label><input class="readonly-field" th:value="${order.paymentType == 'CASH' ? '現金' : (order.paymentType == 'TRANSFER' ? '轉帳' : (order.paymentType == 'CREDIT' ? '欠款' : order.paymentType))}" readonly></div>
+                    <div><label>付款狀態</label><input class="readonly-field" th:value="${order.paymentStatus == 'PAID' ? '已付款' : (order.paymentStatus == 'UNPAID' ? '待付款' : (order.paymentStatus == 'PARTIAL' ? '部分付款' : order.paymentStatus))}" readonly></div>
                 </div>
                 <div class="actions" style="margin-top:16px;" th:if="${order.pdfPath != null}">
                     <a class="btn btn-primary" th:href="@{/local-file/print(path=${order.pdfPath})}" target="_blank">列印 PDF</a>
@@ -134,6 +166,9 @@
                     <a class="btn btn-outline" th:href="@{/local-file/open-folder(path=${order.pdfPath}, back=${'/sales/' + order.salesId})}">打開資料夾</a>
                 </div>
             </div>
+        </div>
+        <div class="page-bottom-actions" th:if="${editMode and order.status == 'CONFIRMED'}">
+            <button class="btn btn-primary" type="submit" form="salesHeaderForm">儲存單據並更新 PDF</button>
         </div>
     </main>
 </div>
@@ -180,5 +215,6 @@ if (barcodeInput) {
     });
 }
 </script>
+<script src="/js/lookup-modal.js"></script>
 </body>
 </html>

@@ -1,1 +1,80 @@
-<!DOCTYPE html><html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><title>即時庫存</title><link rel="stylesheet" href="/css/app.css"></head><body><div class="app"><div th:replace="~{fragments :: sidebar('inventory')}"></div><main class="main"><div class="topbar"><div><h1>即時庫存</h1><div class="subtitle">由 stock_movements 計算商品總庫存</div></div></div><div class="card"><div class="card-header">庫存列表</div><div class="card-body"><table><thead><tr><th>品號</th><th>類別</th><th>品名</th><th>小名</th><th>單位</th><th>庫存</th><th>安全庫存</th><th>狀態</th></tr></thead><tbody><tr th:each="r : ${rows}"><td th:text="${r.productCode}"></td><td th:text="${r.category}"></td><td th:text="${r.productName}"></td><td th:text="${r.productAlias}"></td><td th:text="${r.unit}"></td><td th:text="${r.quantity}"></td><td th:text="${r.safetyStock}"></td><td th:text="${r.status}"></td></tr></tbody></table></div></div></main></div></body></html>
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>即時庫存</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="app">
+    <div th:replace="~{fragments :: sidebar('inventory')}"></div>
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <h1>即時庫存</h1>
+                <div class="subtitle">下方庫存列表可依欄位篩選與排序；品號可多選顯示。</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header with-actions">
+                <span>庫存列表</span>
+                <div class="actions no-print">
+                    <button class="btn btn-outline btn-compact" type="button" onclick="openColumnChooser('inventoryTable')">顯示欄位</button>
+                    <button class="btn btn-outline btn-compact" onclick="window.print()">列印</button>
+                    <a class="btn btn-primary btn-compact" href="/inventory/export.csv">下載</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-scroll inventory-table-scroll vertical-scroll">
+                <table id="inventoryTable" class="excel-table resizable-table filterable-table" data-table-key="inventory">
+                    <thead>
+                    <tr>
+                        <th data-sort="text" data-filterable="true" data-filter-label="品號">品號</th>
+                        <th data-sort="text" data-filterable="true" data-filter-label="類別">類別</th>
+                        <th data-sort="text" data-filterable="true" data-filter-label="品名">品名</th>
+                        <th data-sort="text" data-filterable="true" data-filter-label="小名">小名</th>
+                        <th data-sort="text" data-filterable="true" data-filter-label="規格">規格</th>
+                        <th data-sort="text" data-filterable="true" data-filter-label="顏色">顏色</th>
+                        <th data-sort="text" data-filterable="true" data-filter-label="單位">單位</th>
+                        <th data-sort="number" data-filterable="true" data-filter-label="預設進貨價">預設進貨價</th>
+                        <th data-sort="number" data-filterable="true" data-filter-label="預設銷貨價">預設銷貨價</th>
+                        <th data-sort="text" data-filterable="true" data-filter-label="備註">備註</th>
+                        <th data-sort="text" data-filterable="true" data-filter-label="產品狀態">產品狀態</th>
+                        <th data-sort="number" data-filterable="true" data-filter-label="庫存">庫存</th>
+                        <th data-sort="number" data-filterable="true" data-filter-label="安全庫存">安全庫存</th>
+                        <th data-sort="text" data-filterable="true" data-filter-label="狀況提示">狀況提示</th>
+                        <th class="no-print">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${rows}" th:style="${r.rowBackground != null && r.rowBackground != '' ? 'background-color:' + r.rowBackground : ''}">
+                        <td th:text="${r.productCode}"></td>
+                        <td th:text="${r.category}"></td>
+                        <td th:text="${r.productName}"></td>
+                        <td th:text="${r.productAlias}"></td>
+                        <td th:text="${r.specification}"></td>
+                        <td th:text="${r.color}"></td>
+                        <td th:text="${r.unit}"></td>
+                        <td th:text="${r.defaultPurchasePrice}"></td>
+                        <td th:text="${r.defaultSalePrice}"></td>
+                        <td th:text="${r.note}"></td>
+                        <td th:text="${r.activeText}"></td>
+                        <td th:text="${r.quantity}"></td>
+                        <td th:text="${r.safetyStock}"></td>
+                        <td class="inventory-status" th:classappend="${r.lowStock} ? ' inventory-low'" th:text="${r.statusText}"></td>
+                        <td class="no-print"><a class="btn btn-outline" th:href="@{'/inventory/products/' + ${r.productId} + '/lots'}">查看批次</a></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(rows)}"><td colspan="15">無符合條件資料。</td></tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+
+<script src="/js/table-tools.js"></script>
+</body>
+</html>

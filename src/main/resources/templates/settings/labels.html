@@ -12,17 +12,32 @@
         <div class="topbar">
             <div>
                 <h1>進貨貼紙範本</h1>
-                <div class="subtitle">上方新增或編輯範本；下方顯示已建立的貼紙範本列表。</div>
+                <div class="subtitle">預設顯示範本列表；右上可新增，列表可編輯。</div>
             </div>
-            <div class="actions">
-                <a class="btn btn-outline" href="/settings/label-templates">清空表單 / 新增範本</a>
+            <div class="actions" th:if="${!editingExisting and param.new == null}">
+                <a class="btn btn-primary" href="/settings/label-templates?new=true">新增範本</a>
+            </div>
+            <div class="actions" th:if="${editingExisting or param.new != null}">
+                <a class="btn btn-danger" th:if="${param.new != null}" href="/settings/label-templates">刪除草稿</a>
+                <a class="btn btn-outline" href="/settings/label-templates">取消編輯</a>
             </div>
         </div>
         <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
         <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
-        <div class="card">
-            <div class="card-header" th:text="${editingExisting} ? '編輯貼紙範本' : '新增貼紙範本'">新增貼紙範本</div>
+        <div class="card" th:if="${editingExisting or param.new != null}">
+            <div class="card-header with-actions">
+                <span th:text="${editingExisting} ? '編輯貼紙範本' : '新增貼紙範本'">新增貼紙範本</span>
+                <div class="actions" th:if="${editingExisting and setting.settingId != null}">
+                    <form method="post" th:if="${setting.active != false and !setting.defaultTemplate}" th:action="@{'/settings/labels/' + ${setting.settingId} + '/void'}" onsubmit="return confirm('確定作廢此範本？作廢後不會出現在進貨單貼紙範本下拉選單。')">
+                        <button class="btn btn-danger" type="submit">作廢</button>
+                    </form>
+                    <button class="btn btn-danger" th:if="${setting.active != false and setting.defaultTemplate}" type="button" disabled title="預設範本不可作廢，請先指定其他範本為預設">作廢</button>
+                    <form method="post" th:if="${setting.active == false}" th:action="@{'/settings/labels/' + ${setting.settingId} + '/restore'}" onsubmit="return confirm('確定恢復此範本？')">
+                        <button class="btn btn-primary" type="submit">恢復</button>
+                    </form>
+                </div>
+            </div>
             <div class="card-body">
                 <form method="post" action="/settings/labels" th:object="${setting}">
                     <input type="hidden" th:field="*{settingId}">
@@ -42,7 +57,7 @@
                         <div><label>條碼寬度 mm</label><input th:field="*{barcodeWidthMm}" type="number" step="0.1" placeholder="38"></div>
                         <div><label>條碼高度 mm</label><input th:field="*{barcodeHeightMm}" type="number" step="0.1" placeholder="7"></div>
                         <div><label>顯示邊框</label><select th:field="*{showBorder}"><option value="true">是</option><option value="false">否</option></select></div>
-                        <div style="display:flex;align-items:end;"><button class="btn-primary" type="submit" th:text="${editingExisting} ? '儲存範本' : '新增範本'">新增範本</button></div>
+                        <div th:if="${editingExisting}"><label>範本狀態</label><input th:value="${setting.active == false ? '已作廢' : '正常使用'}" readonly></div>
                     </div>
 
                     <div class="card" style="box-shadow:none; margin-top:18px;">
@@ -61,21 +76,49 @@
                             </table>
                         </div>
                     </div>
-                </form>
-                <form method="post" th:if="${editingExisting and setting.settingId != null and !setting.defaultTemplate}" th:action="@{'/settings/labels/' + ${setting.settingId} + '/delete'}" style="margin-top:12px;" onsubmit="return confirm('確定刪除此範本？')">
-                    <button class="btn-danger" type="submit">刪除範本</button>
-                </form>
+                    <div class="actions" style="margin-top:16px;">
+                        <button class="btn btn-primary" type="submit" th:text="${editingExisting} ? '儲存貼紙範本' : '儲存貼紙範本'">儲存貼紙範本</button>
+                        <button class="btn btn-outline" th:if="${editingExisting and setting.settingId != null and setting.active != false}" type="submit" th:formaction="@{'/settings/labels/' + ${setting.settingId} + '/test-pdf'}">產生測試貼紙 PDF</button>
+                    </div>
+                </form>                <div class="alert alert-info" th:if="${testPdfPath}" style="margin-top:16px;">
+                    測試貼紙已產生：
+                    <a th:href="@{/local-file(path=${testPdfPath})}" target="_blank">開啟 PDF</a>
+                    ｜ <a th:href="@{/local-file/download(path=${testPdfPath})}">下載 PDF</a>
+                </div>
                 <div class="alert alert-info" style="margin-top:16px;">
                     精準對位方式：先確認標籤紙實際尺寸，輸入寬高後以 100% 實際大小列印測試。若文字偏上，增加上邊距；偏左，增加左邊距；條碼壓到文字，降低條碼高度或調整條碼寬度。不同 Windows / macOS 驅動可能有可列印邊界差異，需以實機微調。
                 </div>
             </div>
         </div>
 
-        <div class="card">
+        <div class="card no-print" th:if="${!editingExisting and param.new == null}">
+            <div class="card-header">查詢條件</div>
+            <div class="card-body">
+                <form method="get" action="/settings/label-templates" class="search-form">
+                    <div class="grid grid-4">
+                        <div><label>範本名稱</label><input name="templateName" th:value="${templateName}" placeholder="輸入範本名稱"></div>
+                        <div>
+                            <label>狀態</label>
+                            <select name="activeStatus">
+                                <option value="" th:selected="${activeStatus == null || activeStatus == ''}">全部</option>
+                                <option value="ACTIVE" th:selected="${activeStatus == 'ACTIVE'}">正常使用</option>
+                                <option value="VOID" th:selected="${activeStatus == 'VOID'}">已作廢</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="actions form-actions-separated">
+                        <button class="btn btn-primary" type="submit">查詢</button>
+                        <a class="btn btn-outline" href="/settings/label-templates">清除</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card" th:if="${!editingExisting and param.new == null}">
             <div class="card-header">貼紙範本列表</div>
             <div class="card-body">
                 <table>
-                    <thead><tr><th>範本名稱</th><th>尺寸</th><th>邊距</th><th>字級</th><th>條碼</th><th>預設</th><th>操作</th></tr></thead>
+                    <thead><tr><th>範本名稱</th><th>尺寸</th><th>邊距</th><th>字級</th><th>條碼</th><th>狀態</th><th>預設</th><th>操作</th></tr></thead>
                     <tbody>
                     <tr th:each="tpl : ${templates}">
                         <td th:text="${tpl.templateName}"></td>
@@ -83,10 +126,11 @@
                         <td th:text="${'上 ' + tpl.marginTopMm + ' / 左 ' + tpl.marginLeftMm + ' mm'}"></td>
                         <td th:text="${'大 ' + tpl.fontSizeLarge + ' / 一般 ' + tpl.fontSizeNormal}"></td>
                         <td th:text="${tpl.barcodeWidthMm + ' x ' + tpl.barcodeHeightMm + ' mm'}"></td>
+                        <td><span class="badge" th:classappend="${tpl.active == false ? ' badge-danger' : ' badge-success'}" th:text="${tpl.active == false ? '已作廢' : '正常'}">正常</span></td>
                         <td><span class="badge badge-success" th:if="${tpl.defaultTemplate}">預設</span></td>
                         <td><a class="btn btn-outline" th:href="@{/settings/label-templates(settingId=${tpl.settingId})}">編輯</a></td>
                     </tr>
-                    <tr th:if="${#lists.isEmpty(templates)}"><td colspan="7">尚未建立貼紙範本。請先在上方新增一筆範本。</td></tr>
+                    <tr th:if="${#lists.isEmpty(templates)}"><td colspan="8">尚未建立貼紙範本，請點右上角「新增範本」。</td></tr>
                     </tbody>
                 </table>
             </div>

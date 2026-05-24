@@ -30,6 +30,13 @@ public class PurchaseOrder {
     private String note;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime voidedAt;
+    private LocalDateTime restoredAt;
+    private LocalDateTime pdfUpdatedAt;
+    private LocalDateTime driveUploadedAt;
+    private String driveFileId;
+    private String driveFileName;
+    private String driveFolderId;
 
     @PrePersist public void prePersist() { createdAt = LocalDateTime.now(); updatedAt = createdAt; }
     @PreUpdate public void preUpdate() { updatedAt = LocalDateTime.now(); }
@@ -69,5 +76,21 @@ public class PurchaseOrder {
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public LocalDateTime getVoidedAt() { return voidedAt; }
+    public void setVoidedAt(LocalDateTime voidedAt) { this.voidedAt = voidedAt; }
+    public LocalDateTime getRestoredAt() { return restoredAt; }
+    public void setRestoredAt(LocalDateTime restoredAt) { this.restoredAt = restoredAt; }
+    public LocalDateTime getPdfUpdatedAt() { return pdfUpdatedAt; }
+    public void setPdfUpdatedAt(LocalDateTime pdfUpdatedAt) { this.pdfUpdatedAt = pdfUpdatedAt; }
+    public LocalDateTime getDriveUploadedAt() { return driveUploadedAt; }
+    public void setDriveUploadedAt(LocalDateTime driveUploadedAt) { this.driveUploadedAt = driveUploadedAt; }
+    public String getDriveFileId() { return driveFileId; }
+    public void setDriveFileId(String driveFileId) { this.driveFileId = driveFileId; }
+    public String getDriveFileName() { return driveFileName; }
+    public void setDriveFileName(String driveFileName) { this.driveFileName = driveFileName; }
+    public String getDriveFolderId() { return driveFolderId; }
+    public void setDriveFolderId(String driveFolderId) { this.driveFolderId = driveFolderId; }
 }

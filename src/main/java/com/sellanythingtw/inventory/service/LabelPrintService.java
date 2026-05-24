@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.FileOutputStream;
+import java.math.BigDecimal;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -44,21 +46,26 @@ public class LabelPrintService {
     }
 
     public LabelPrintSetting getDefaultTemplate() {
-        return settingRepository.findFirstByDefaultTemplateTrueOrderBySettingIdAsc()
-                .orElseGet(() -> settingRepository.findAllByOrderByDefaultTemplateDescSettingIdAsc().stream().findFirst()
+        return settingRepository.findFirstUsableDefaultTemplate()
+                .orElseGet(() -> settingRepository.findUsableTemplates().stream().findFirst()
                         .map(existing -> {
                             existing.setDefaultTemplate(true);
                             return settingRepository.save(existing);
                         })
                         .orElseGet(() -> {
                             LabelPrintSetting setting = new LabelPrintSetting();
-                            setting.setTemplateName("預設進貨貼紙");
+                            setting.setTemplateName("花材標籤 50x30");
                             setting.setDefaultTemplate(true);
+                            setting.setActive(true);
                             return settingRepository.save(setting);
                         }));
     }
 
     public List<LabelPrintSetting> listTemplates() {
+        return settingRepository.findUsableTemplates();
+    }
+
+    public List<LabelPrintSetting> listAllTemplates() {
         return settingRepository.findAllByOrderByDefaultTemplateDescSettingIdAsc();
     }
 
@@ -89,6 +96,9 @@ public class LabelPrintService {
         setting.setBarcodeWidthMm(form.getBarcodeWidthMm());
         setting.setBarcodeHeightMm(form.getBarcodeHeightMm());
         setting.setShowBorder(Boolean.TRUE.equals(form.getShowBorder()));
+        if (creating || setting.getActive() == null) {
+            setting.setActive(true);
+        }
         setting.setPriceX(form.getPriceX());
         setting.setPriceY(form.getPriceY());
         setting.setTrayX(form.getTrayX());
@@ -107,7 +117,7 @@ public class LabelPrintService {
         setting.setBarcodeY(form.getBarcodeY());
         setting.setBarcodeTextX(form.getBarcodeTextX());
         setting.setBarcodeTextY(form.getBarcodeTextY());
-        if (Boolean.TRUE.equals(form.getDefaultTemplate()) || settingRepository.count() == 0) {
+        if (Boolean.TRUE.equals(form.getDefaultTemplate()) || settingRepository.findUsableTemplates().isEmpty()) {
             for (LabelPrintSetting existing : settingRepository.findAll()) {
                 existing.setDefaultTemplate(false);
                 settingRepository.save(existing);
@@ -117,10 +127,7 @@ public class LabelPrintService {
             setting.setDefaultTemplate(false);
         }
         LabelPrintSetting saved = settingRepository.save(setting);
-        if (settingRepository.findFirstByDefaultTemplateTrueOrderBySettingIdAsc().isEmpty()) {
-            saved.setDefaultTemplate(true);
-            saved = settingRepository.save(saved);
-        }
+        ensureActiveDefaultExists(saved);
         return saved;
     }
 
@@ -131,6 +138,41 @@ public class LabelPrintService {
             throw new IllegalArgumentException("預設範本不可刪除，請先指定其他範本為預設");
         }
         settingRepository.delete(setting);
+    }
+
+    @Transactional
+    public void voidTemplate(Long settingId) {
+        LabelPrintSetting setting = settingRepository.findById(settingId)
+                .orElseThrow(() -> new IllegalArgumentException("找不到貼紙範本"));
+        if (Boolean.TRUE.equals(setting.getDefaultTemplate())) {
+            throw new IllegalArgumentException("預設範本不可作廢，請先指定其他範本為預設");
+        }
+        setting.setActive(false);
+        setting.setDefaultTemplate(false);
+        settingRepository.save(setting);
+        ensureActiveDefaultExists(null);
+    }
+
+    @Transactional
+    public void restoreTemplate(Long settingId) {
+        LabelPrintSetting setting = settingRepository.findById(settingId)
+                .orElseThrow(() -> new IllegalArgumentException("找不到貼紙範本"));
+        setting.setActive(true);
+        settingRepository.save(setting);
+        ensureActiveDefaultExists(setting);
+    }
+
+    private void ensureActiveDefaultExists(LabelPrintSetting preferred) {
+        if (settingRepository.findFirstUsableDefaultTemplate().isPresent()) {
+            return;
+        }
+        LabelPrintSetting target = preferred != null && Boolean.TRUE.equals(preferred.getActive())
+                ? preferred
+                : settingRepository.findUsableTemplates().stream().findFirst().orElse(null);
+        if (target != null) {
+            target.setDefaultTemplate(true);
+            settingRepository.save(target);
+        }
     }
 
     @Transactional
@@ -153,6 +195,30 @@ public class LabelPrintService {
         Path path = Path.of(appProperties.getLabelDir(), "purchase", "purchase_" + purchaseId + "_labels.pdf");
         FilesUtils.createFolder(path.getParent().toString());
         writeLabels(path, lots, printCopies);
+        return path.toString();
+    }
+
+    @Transactional
+    public String createTestLabelPdf(Long settingId) {
+        LabelPrintSetting setting = getTemplate(settingId);
+        if (!Boolean.TRUE.equals(setting.getActive())) {
+            throw new IllegalArgumentException("已作廢範本不可產生測試貼紙");
+        }
+        PurchaseLot sample = new PurchaseLot();
+        sample.setBarcodeValue("260520000001");
+        sample.setProductName("蝴蝶蘭A級");
+        sample.setProductAlias("白花");
+        sample.setSupplierCode("SUP01");
+        sample.setPurchaseDate(LocalDate.now());
+        sample.setPurchaseDateCode(LocalDate.now().format(DateTimeFormatter.ofPattern("MMdd")));
+        sample.setWholesalePrice(new BigDecimal("120"));
+        sample.setSalePrice(new BigDecimal("180"));
+        sample.setTrayQuantityCode("P15");
+        sample.setSizeCode("K0");
+        sample.setLabelSettingId(setting.getSettingId());
+        Path path = Path.of(appProperties.getLabelDir(), "purchase", "label_template_" + setting.getSettingId() + "_test.pdf");
+        FilesUtils.createFolder(path.getParent().toString());
+        writeLabels(path, List.of(sample), 1);
         return path.toString();
     }
 

@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,6 +54,7 @@ public class PurchaseOrderService {
     }
 
     public PurchaseOrder createDraft(Long supplierId, LocalDate purchaseDate) {
+        if (supplierId == null) throw new IllegalArgumentException("供應商為必填，請雙擊查詢並選擇供應商");
         LocalDate today = LocalDate.now();
         PurchaseOrder order = new PurchaseOrder();
         order.setPurchaseNo(sequenceService.nextDocumentNo("PI", today.format(YMD)));
@@ -91,6 +93,7 @@ public class PurchaseOrderService {
 
     @Transactional
     public PurchaseOrder updateDraftHeader(Long purchaseId, Long supplierId, LocalDate purchaseDate, Boolean taxEnabled, String note) {
+        if (supplierId == null) throw new IllegalArgumentException("供應商為必填，請雙擊查詢並選擇供應商");
         PurchaseOrder order = getOrder(purchaseId);
         order.setSupplierId(supplierId);
         order.setPurchaseDate(purchaseDate == null ? LocalDate.now() : purchaseDate);
@@ -100,7 +103,7 @@ public class PurchaseOrderService {
 
         if ("CONFIRMED".equals(order.getStatus())) {
             syncConfirmedLotsHeader(order);
-            regeneratePurchasePdf(order);
+            order = regeneratePurchasePdf(order);
         }
         return order;
     }
@@ -113,7 +116,8 @@ public class PurchaseOrderService {
                                      String trayQuantityCode,
                                      String sizeCode,
                                      Integer quantity,
-                                     Long labelSettingId) {
+                                     Long labelSettingId,
+                                     String itemNote) {
         PurchaseOrder order = getOrder(purchaseId);
         if ("VOID".equals(order.getStatus())) throw new IllegalStateException("作廢單據不可新增明細，請先恢復單據");
         if (quantity == null || quantity <= 0) throw new IllegalArgumentException("進貨數量必須大於 0");
@@ -141,11 +145,12 @@ public class PurchaseOrderService {
         item.setAmount(unitCost.multiply(BigDecimal.valueOf(quantity)));
         item.setSortOrder(itemRepository.findByPurchaseIdOrderBySortOrderAsc(purchaseId).size() + 1);
         item.setLabelSettingId(labelSettingId == null ? labelPrintService.getDefaultTemplate().getSettingId() : labelSettingId);
+        item.setItemNote(itemNote == null ? "" : itemNote.trim());
         PurchaseOrderItem saved = itemRepository.save(item);
         recalculateAndSave(order);
         if ("CONFIRMED".equals(order.getStatus())) {
             createLotAndMovementForConfirmedItem(order, saved);
-            regeneratePurchasePdf(order);
+            order = regeneratePurchasePdf(order);
         }
         return saved;
     }
@@ -170,7 +175,7 @@ public class PurchaseOrderService {
         itemRepository.delete(item);
         recalculateAndSave(order);
         if ("CONFIRMED".equals(order.getStatus())) {
-            regeneratePurchasePdf(order);
+            order = regeneratePurchasePdf(order);
         }
     }
 
@@ -183,7 +188,8 @@ public class PurchaseOrderService {
                                         String trayQuantityCode,
                                         String sizeCode,
                                         Integer quantity,
-                                        Long labelSettingId) {
+                                        Long labelSettingId,
+                                        String itemNote) {
         PurchaseOrder order = getOrder(purchaseId);
         PurchaseOrderItem item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("找不到進貨明細"));
@@ -210,13 +216,14 @@ public class PurchaseOrderService {
         item.setQuantity(quantity);
         item.setAmount(unitCost.multiply(BigDecimal.valueOf(quantity)));
         item.setLabelSettingId(labelSettingId == null ? labelPrintService.getDefaultTemplate().getSettingId() : labelSettingId);
+        item.setItemNote(itemNote == null ? "" : itemNote.trim());
         PurchaseOrderItem saved = itemRepository.save(item);
 
         recalculateAndSave(order);
 
         if ("CONFIRMED".equals(order.getStatus())) {
             syncConfirmedLotAndMovement(order, saved);
-            regeneratePurchasePdf(order);
+            order = regeneratePurchasePdf(order);
         }
         return saved;
     }
@@ -235,13 +242,14 @@ public class PurchaseOrderService {
                                              String sizeCode,
                                              Integer quantity,
                                              Long labelSettingId,
+                                             String itemNote,
                                              boolean confirmImmediately) {
         PurchaseOrder order = createDraft(supplierId, purchaseDate);
         order.setTaxEnabled(Boolean.TRUE.equals(taxEnabled));
         order.setNote(note == null ? "" : note.trim());
         purchaseOrderRepository.save(order);
         if (productId != null) {
-            addItem(order.getPurchaseId(), productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId);
+            addItem(order.getPurchaseId(), productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId, itemNote);
         }
         if (confirmImmediately) {
             return confirm(order.getPurchaseId());
@@ -263,13 +271,15 @@ public class PurchaseOrderService {
                                       List<String> sizeCodes,
                                       List<Integer> quantities,
                                       List<Long> labelSettingIds,
+                                      List<String> itemNotes,
                                       Long newProductId,
                                       BigDecimal newWholesalePrice,
                                       BigDecimal newSalePrice,
                                       String newTrayQuantityCode,
                                       String newSizeCode,
                                       Integer newQuantity,
-                                      Long newLabelSettingId) {
+                                      Long newLabelSettingId,
+                                      String newItemNote) {
         PurchaseOrder order = updateDraftHeader(purchaseId, supplierId, purchaseDate, taxEnabled, note);
         int count = itemIds == null ? 0 : itemIds.size();
         for (int i = 0; i < count; i++) {
@@ -281,16 +291,17 @@ public class PurchaseOrderService {
             String size = get(sizeCodes, i);
             Integer qty = get(quantities, i);
             Long labelId = get(labelSettingIds, i);
-            updateItem(purchaseId, itemId, productId, wholesalePrice, salePrice, p, size, qty, labelId);
+            String itemNote = get(itemNotes, i);
+            updateItem(purchaseId, itemId, productId, wholesalePrice, salePrice, p, size, qty, labelId, itemNote);
         }
         if (newProductId != null) {
             addItem(purchaseId, newProductId, newWholesalePrice, newSalePrice, newTrayQuantityCode, newSizeCode,
-                    newQuantity == null ? 1 : newQuantity, newLabelSettingId);
+                    newQuantity == null ? 1 : newQuantity, newLabelSettingId, newItemNote);
         }
         order = getOrder(purchaseId);
         recalculateAndSave(order);
         if ("CONFIRMED".equals(order.getStatus())) {
-            regeneratePurchasePdf(order);
+            order = regeneratePurchasePdf(order);
         }
         return order;
     }
@@ -370,11 +381,7 @@ public class PurchaseOrderService {
             movementRepository.save(movement);
         }
 
-        String pdfPath = pdfService.createPurchaseOrderPdf(order, items, supplier);
-        order.setPdfPath(pdfPath);
-        order.setLabelPdfPath(labelPrintService.createPurchaseLabelsPdf(order.getPurchaseId(), 1));
-        order = purchaseOrderRepository.save(order);
-        cloudSyncService.uploadPdfIfEnabled("PURCHASE", order.getPurchaseId(), pdfPath, supplier == null ? "未指定供應商" : supplier.getSupplierName());
+        order = regeneratePurchasePdf(order);
         return order;
     }
 
@@ -435,7 +442,9 @@ public class PurchaseOrderService {
         if ("VOID".equals(order.getStatus())) return order;
         if ("DRAFT".equals(order.getStatus())) throw new IllegalStateException("草稿請使用刪除草稿，不需作廢");
         order.setStatus("VOID");
-        return purchaseOrderRepository.save(order);
+        order.setVoidedAt(LocalDateTime.now());
+        order = purchaseOrderRepository.save(order);
+        return regeneratePurchasePdf(order);
     }
 
     @Transactional
@@ -443,7 +452,9 @@ public class PurchaseOrderService {
         PurchaseOrder order = getOrder(purchaseId);
         if (!"VOID".equals(order.getStatus())) return order;
         order.setStatus("CONFIRMED");
-        return purchaseOrderRepository.save(order);
+        order.setRestoredAt(LocalDateTime.now());
+        order = purchaseOrderRepository.save(order);
+        return regeneratePurchasePdf(order);
     }
 
     private void syncConfirmedLotsHeader(PurchaseOrder order) {
@@ -498,15 +509,20 @@ public class PurchaseOrderService {
                 });
     }
 
-    private void regeneratePurchasePdf(PurchaseOrder order) {
+    private PurchaseOrder regeneratePurchasePdf(PurchaseOrder order) {
+        order.setPdfUpdatedAt(LocalDateTime.now());
+        order = purchaseOrderRepository.save(order);
+
         List<PurchaseOrderItem> items = itemRepository.findByPurchaseIdOrderBySortOrderAsc(order.getPurchaseId());
         Supplier supplier = supplierRepository.findById(order.getSupplierId() == null ? -1L : order.getSupplierId()).orElse(null);
         String pdfPath = pdfService.createPurchaseOrderPdf(order, items, supplier);
         order.setPdfPath(pdfPath);
-        if ("CONFIRMED".equals(order.getStatus()) && !lotRepository.findByPurchaseId(order.getPurchaseId()).isEmpty()) {
+        if (("CONFIRMED".equals(order.getStatus()) || "VOID".equals(order.getStatus())) && !lotRepository.findByPurchaseId(order.getPurchaseId()).isEmpty()) {
             order.setLabelPdfPath(labelPrintService.createPurchaseLabelsPdf(order.getPurchaseId(), 1));
         }
-        purchaseOrderRepository.save(order);
+        order = purchaseOrderRepository.save(order);
+        cloudSyncService.uploadPdfIfEnabled("PURCHASE", order.getPurchaseId(), pdfPath, supplier == null ? "未指定供應商" : supplier.getSupplierName());
+        return order;
     }
 
     private void recalculateAndSave(PurchaseOrder order) {

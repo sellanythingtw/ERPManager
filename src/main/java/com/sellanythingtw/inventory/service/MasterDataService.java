@@ -33,12 +33,26 @@ public class MasterDataService {
         if (product.getProductCode() == null || product.getProductCode().isBlank()) {
             product.setProductCode(sequenceService.nextMasterCode("P"));
         }
+        if (product.getActive() == null) {
+            if (product.getProductId() != null) {
+                productRepository.findById(product.getProductId()).ifPresent(existing -> product.setActive(existing.getActive() == null || existing.getActive()));
+            } else {
+                product.setActive(true);
+            }
+        }
         return productRepository.save(product);
     }
 
     public Customer saveCustomer(Customer customer) {
         if (customer.getCustomerCode() == null || customer.getCustomerCode().isBlank()) {
             customer.setCustomerCode(sequenceService.nextMasterCode("C"));
+        }
+        if (customer.getActive() == null) {
+            if (customer.getCustomerId() != null) {
+                customerRepository.findById(customer.getCustomerId()).ifPresent(existing -> customer.setActive(existing.getActive() == null || existing.getActive()));
+            } else {
+                customer.setActive(true);
+            }
         }
         return customerRepository.save(customer);
     }
@@ -47,6 +61,49 @@ public class MasterDataService {
         if (supplier.getSupplierCode() == null || supplier.getSupplierCode().isBlank()) {
             supplier.setSupplierCode(sequenceService.nextMasterCode("S"));
         }
+        if (supplier.getActive() == null) {
+            if (supplier.getSupplierId() != null) {
+                supplierRepository.findById(supplier.getSupplierId()).ifPresent(existing -> supplier.setActive(existing.getActive() == null || existing.getActive()));
+            } else {
+                supplier.setActive(true);
+            }
+        }
+        return supplierRepository.save(supplier);
+    }
+
+    public Product voidProduct(Long productId) {
+        Product product = productRepository.findById(productId).orElseThrow(() -> new IllegalArgumentException("找不到產品"));
+        product.setActive(false);
+        return productRepository.save(product);
+    }
+
+    public Product restoreProduct(Long productId) {
+        Product product = productRepository.findById(productId).orElseThrow(() -> new IllegalArgumentException("找不到產品"));
+        product.setActive(true);
+        return productRepository.save(product);
+    }
+
+    public Customer voidCustomer(Long customerId) {
+        Customer customer = customerRepository.findById(customerId).orElseThrow(() -> new IllegalArgumentException("找不到客戶"));
+        customer.setActive(false);
+        return customerRepository.save(customer);
+    }
+
+    public Customer restoreCustomer(Long customerId) {
+        Customer customer = customerRepository.findById(customerId).orElseThrow(() -> new IllegalArgumentException("找不到客戶"));
+        customer.setActive(true);
+        return customerRepository.save(customer);
+    }
+
+    public Supplier voidSupplier(Long supplierId) {
+        Supplier supplier = supplierRepository.findById(supplierId).orElseThrow(() -> new IllegalArgumentException("找不到供應商"));
+        supplier.setActive(false);
+        return supplierRepository.save(supplier);
+    }
+
+    public Supplier restoreSupplier(Long supplierId) {
+        Supplier supplier = supplierRepository.findById(supplierId).orElseThrow(() -> new IllegalArgumentException("找不到供應商"));
+        supplier.setActive(true);
         return supplierRepository.save(supplier);
     }
 }

@@ -24,6 +24,8 @@ public class PurchaseOrderItem {
     private BigDecimal amount = BigDecimal.ZERO;
     private Integer sortOrder = 0;
     private Long labelSettingId;
+    @Column(length = 1000)
+    private String itemNote;
 
     public Long getItemId() { return itemId; }
     public void setItemId(Long itemId) { this.itemId = itemId; }
@@ -59,4 +61,6 @@ public class PurchaseOrderItem {
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
     public Long getLabelSettingId() { return labelSettingId; }
     public void setLabelSettingId(Long labelSettingId) { this.labelSettingId = labelSettingId; }
+    public String getItemNote() { return itemNote; }
+    public void setItemNote(String itemNote) { this.itemNote = itemNote; }
 }

@@ -8,17 +8,22 @@ import java.time.LocalDateTime;
 public class LabelPrintSetting {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long settingId;
-    private String templateName = "預設進貨貼紙";
+    private String templateName = "花材標籤 50x30";
     private Boolean defaultTemplate = true;
     private Double labelWidthMm = 50.0;
     private Double labelHeightMm = 30.0;
-    private Double marginTopMm = 3.0;
-    private Double marginLeftMm = 3.0;
-    private Integer fontSizeLarge = 11;
-    private Integer fontSizeNormal = 8;
-    private Double barcodeWidthMm = 38.0;
-    private Double barcodeHeightMm = 7.0;
-    private Boolean showBorder = true;
+    private Double marginTopMm = 0.0;
+    private Double marginLeftMm = 0.0;
+    private Integer fontSizeLarge = 7;
+    private Integer fontSizeNormal = 5;
+    private Double barcodeWidthMm = 25.0;
+    private Double barcodeHeightMm = 3.4;
+    private Boolean showBorder = false;
+    /**
+     * 範本是否仍可使用。
+     * true：正常；false：已作廢，不再出現在進貨單的範本下拉選單。
+     */
+    private Boolean active = true;
 
     // 精準定位欄位：單位為 mm，座標原點為貼紙左下角。空白則使用系統預設座標。
     private Double priceX;
@@ -67,6 +72,8 @@ public class LabelPrintSetting {
     public void setBarcodeHeightMm(Double barcodeHeightMm) { this.barcodeHeightMm = barcodeHeightMm; }
     public Boolean getShowBorder() { return showBorder; }
     public void setShowBorder(Boolean showBorder) { this.showBorder = showBorder; }
+    public Boolean getActive() { return active; }
+    public void setActive(Boolean active) { this.active = active; }
 
     public Double getPriceX() { return priceX; }
     public void setPriceX(Double priceX) { this.priceX = priceX; }

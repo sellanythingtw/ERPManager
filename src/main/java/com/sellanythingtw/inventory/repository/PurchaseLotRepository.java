@@ -10,4 +10,5 @@ public interface PurchaseLotRepository extends JpaRepository<PurchaseLot, Long> 
     List<PurchaseLot> findByPurchaseId(Long purchaseId);
     Optional<PurchaseLot> findByPurchaseItemId(Long purchaseItemId);
     List<PurchaseLot> findByProductIdAndStatus(Long productId, String status);
+    List<PurchaseLot> findByProductIdAndRemainingQuantityGreaterThanOrderByPurchaseDateDesc(Long productId, Integer remainingQuantity);
 }

@@ -45,7 +45,11 @@ public class PaymentService {
             if (!"CONFIRMED".equals(order.getStatus())) continue;
             if (dateFrom != null && order.getSalesDate() != null && order.getSalesDate().isBefore(dateFrom)) continue;
             if (dateTo != null && order.getSalesDate() != null && order.getSalesDate().isAfter(dateTo)) continue;
-            if (hasText(paymentStatus) && !paymentStatus.equals(order.getPaymentStatus())) continue;
+            if (hasText(paymentStatus)) {
+                BigDecimal unpaid = order.getUnpaidAmount() == null ? BigDecimal.ZERO : order.getUnpaidAmount();
+                if ("PAID".equals(paymentStatus) && unpaid.compareTo(BigDecimal.ZERO) > 0) continue;
+                if (("DEBT".equals(paymentStatus) || "UNPAID".equals(paymentStatus)) && unpaid.compareTo(BigDecimal.ZERO) <= 0) continue;
+            }
             if (hasText(paymentType) && !paymentType.equals(order.getPaymentType())) continue;
 
             Customer customer = customerRepository.findById(order.getCustomerId() == null ? -1L : order.getCustomerId()).orElse(null);

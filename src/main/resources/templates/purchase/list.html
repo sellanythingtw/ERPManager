@@ -12,28 +12,57 @@
         <div class="topbar">
             <div>
                 <h1>進貨單列表</h1>
-                <div class="subtitle">進貨單功能預設進入此列表；右側可新增進貨單。點進單據後可再按「編輯單據」修改。</div>
+                <div class="subtitle">可依單號、供應商、狀態與日期查詢；搜尋後由列表選擇單據。</div>
             </div>
-            <div class="actions"><a class="btn btn-primary" href="/purchases/new">＋ 新增進貨單</a></div>
+            <div class="actions"><a class="btn btn-primary" href="/purchases/new">新增進貨單</a></div>
+        </div>
+
+        <div class="card no-print">
+            <div class="card-header">查詢條件</div>
+            <div class="card-body">
+                <form method="get" action="/purchases" class="search-form">
+                    <div class="grid grid-4">
+                        <div><label>關鍵字</label><input name="keyword" th:value="${keyword}" placeholder="進貨單號"></div>
+                        <div><label>供應商代號</label><input name="supplierCode" data-lookup="suppliers" data-fill="code" th:value="${supplierCode}" placeholder="輸入後雙擊查詢"></div>
+                        <div><label>供應商名稱</label><input name="supplierName" data-lookup="suppliers" data-fill="name" th:value="${supplierName}" placeholder="輸入後雙擊查詢"></div>
+                        <div>
+                            <label>狀態</label>
+                            <select name="status">
+                                <option value="" th:selected="${status == null || status == ''}">全部</option>
+                                <option value="DRAFT" th:selected="${status == 'DRAFT'}">草稿</option>
+                                <option value="CONFIRMED" th:selected="${status == 'CONFIRMED'}">已確認</option>
+                                <option value="VOID" th:selected="${status == 'VOID'}">已作廢</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-4">
+                        <div><label>起始日期</label><input type="date" name="dateFrom" th:value="${dateFrom}"></div>
+                        <div><label>結束日期</label><input type="date" name="dateTo" th:value="${dateTo}"></div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-primary" type="submit">查詢</button>
+                        <a class="btn btn-outline" href="/purchases">清除</a>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <div class="card">
-            <div class="card-header">進貨單資料</div>
-            <div class="card-body">
+            <div class="card-header with-actions">
+                <span>進貨單資料</span>
+                <div class="actions no-print">
+                    <button class="btn btn-outline btn-compact" type="button" onclick="openColumnChooser('purchaseListTable')">顯示欄位</button>
+                    <button class="btn btn-outline btn-compact" type="button" onclick="window.print()">列印</button>
+                    <button class="btn btn-primary btn-compact" type="button" onclick="downloadTableCsv('purchaseListTable', '進貨單列表.csv')">下載</button>
+                </div>
+            </div>
+            <div class="card-body table-scroll vertical-scroll">
                 <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
                 <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
-                <table>
+                <table id="purchaseListTable" class="resizable-table" data-table-key="purchase-list">
                     <thead>
                     <tr>
-                        <th>進貨單號</th>
-                        <th>單據日期</th>
-                        <th>進貨日期</th>
-                        <th>供應商</th>
-                        <th>狀態</th>
-                        <th>總數量</th>
-                        <th>總金額</th>
-                        <th>PDF</th>
-                        <th>操作</th>
+                        <th>進貨單號</th><th>單據日期</th><th>進貨日期</th><th>供應商</th><th>狀態</th><th>總數量</th><th>總金額</th><th>PDF</th><th>操作</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -42,7 +71,7 @@
                         <td th:text="${order.documentDate}"></td>
                         <td th:text="${order.purchaseDate}"></td>
                         <td>
-                            <span th:each="s : ${suppliers}" th:if="${s.supplierId == order.supplierId}" th:text="${s.supplierName}"></span>
+                            <span th:each="s : ${suppliers}" th:if="${s.supplierId == order.supplierId}" th:text="${s.supplierCode + '｜' + s.supplierName}"></span>
                             <span th:if="${order.supplierId == null}">未指定</span>
                         </td>
                         <td><span class="badge" th:classappend="${order.status == 'CONFIRMED'} ? ' badge-success' : (order.status == 'VOID' ? ' badge-danger' : ' badge-warning')" th:text="${order.status == 'CONFIRMED' ? '已確認' : (order.status == 'VOID' ? '已作廢' : '草稿')}"></span></td>
@@ -54,16 +83,20 @@
                             <span th:if="${order.pdfPath == null}">-</span>
                         </td>
                         <td>
-                            <a class="btn btn-outline" th:href="@{'/purchases/' + ${order.purchaseId}}">查看</a>
-                            <a class="btn btn-primary" th:if="${order.status != 'VOID'}" th:href="@{'/purchases/' + ${order.purchaseId} + '?edit=true'}">編輯</a>
+                            <div class="list-row-actions">
+                                <a class="btn btn-outline" th:href="@{'/purchases/' + ${order.purchaseId}}">查看</a>
+                                <a class="btn btn-primary" th:if="${order.status != 'VOID'}" th:href="@{'/purchases/' + ${order.purchaseId} + '?edit=true'}">編輯</a>
+                            </div>
                         </td>
                     </tr>
-                    <tr th:if="${#lists.isEmpty(orders)}"><td colspan="9">尚無進貨單資料，請點右上角「新增進貨單」。</td></tr>
+                    <tr th:if="${#lists.isEmpty(orders)}"><td colspan="9">無符合條件資料。</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 </div>
+<script src="/js/lookup-modal.js"></script>
+<script src="/js/table-tools.js"></script>
 </body>
 </html>

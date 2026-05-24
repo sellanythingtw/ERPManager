@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>系統設定 - ERPManager</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="layout">
+    <div th:replace="~{fragments :: sidebar('settings')}"></div>
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <h1>系統設定</h1>
+                <div class="subtitle">備份還原、Google Drive 連接與自動上傳設定。</div>
+            </div>
+        </div>
+
+        <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+        <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+        <div class="card">
+            <div class="card-header">備份還原</div>
+            <div class="card-body">
+                <div class="grid grid-2">
+                    <div>
+                        <h3>匯出完整備份</h3>
+                        <p class="subtitle">匯出 app 資料、資料庫、PDF、貼紙與設定。Google token 不會匯出。</p>
+                        <a class="btn btn-primary" href="/settings/backup/export">匯出備份 ZIP</a>
+                    </div>
+                    <div>
+                        <h3>匯入備份</h3>
+                        <p class="subtitle">匯入後若包含資料庫檔案，建議重新啟動系統。</p>
+                        <form method="post" action="/settings/backup/import" enctype="multipart/form-data">
+                            <input type="file" name="file" accept=".zip" required>
+                            <div class="actions form-actions-separated">
+                                <button class="btn btn-primary" type="submit" onclick="return confirm('匯入會覆蓋目前 app 資料，系統會先自動備份目前資料。確定匯入？')">匯入備份 ZIP</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Google Drive 連接</div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    使用瀏覽器 OAuth 2.0 同意授權，不使用 API Key。請在 Google Cloud 建立 OAuth Client，並將下方 Redirect URI 加入授權重新導向 URI。
+                </div>
+                <div class="grid grid-2">
+                    <div>
+                        <label>目前 Redirect URI</label>
+                        <input readonly th:value="${redirectUri}">
+                    </div>
+                    <div>
+                        <label>連接狀態</label>
+                        <input readonly th:value="${driveStatus.connected ? '已連接：' + driveStatus.accountEmail : '尚未連接'}">
+                    </div>
+                </div>
+
+                <form method="post" action="/settings/google/config" class="search-form">
+                    <div class="grid grid-2">
+                        <div>
+                            <label>Google OAuth Client ID</label>
+                            <input name="clientId" th:value="${settings['google.clientId']}" placeholder="輸入 OAuth Client ID">
+                        </div>
+                        <div>
+                            <label>Google OAuth Client Secret</label>
+                            <input name="clientSecret" type="password" placeholder="若不修改可留空">
+                        </div>
+                    </div>
+                    <div class="settings-check-grid">
+                        <label><input type="checkbox" name="driveEnabled" th:checked="${settings['drive.enabled'] == 'true'}"> 啟用 Google Drive 自動同步</label>
+                        <label><input type="checkbox" name="purchasePdf" th:checked="${settings['drive.upload.purchasePdf'] == 'true'}"> 進貨單 PDF 自動上傳</label>
+                        <label><input type="checkbox" name="salesPdf" th:checked="${settings['drive.upload.salesPdf'] == 'true'}"> 銷貨單 PDF 自動上傳</label>
+                        <label><input type="checkbox" name="realtimeInventory" th:checked="${settings['drive.upload.inventoryRealtime'] == 'true'}"> 即時庫存 Excel 自動上傳</label>
+                        <label><input type="checkbox" name="dailyInventory" th:checked="${settings['drive.upload.dailyInventory'] == 'true'}"> 每日庫存表上傳</label>
+                        <label>每日庫存表時間 <input name="dailyInventoryTime" type="time" th:value="${settings['drive.dailyInventoryTime'] ?: '23:59'}"></label>
+                    </div>
+                    <div class="actions form-actions-separated">
+                        <button class="btn btn-primary" type="submit">儲存設定</button>
+                        <a class="btn btn-outline" href="/settings/google/connect">連接 Google Drive</a>
+                    </div>
+                </form>
+
+                <div class="actions form-actions-separated">
+                    <form method="post" action="/settings/google/disconnect" onsubmit="return confirm('確定解除 Google Drive 連接？')">
+                        <button class="btn btn-danger" type="submit">解除連接</button>
+                    </form>
+                    <form method="post" action="/settings/google/test-inventory">
+                        <button class="btn btn-outline" type="submit">測試上傳即時庫存</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">雲端同步規則</div>
+            <div class="card-body">
+                <table>
+                    <thead><tr><th>資料</th><th>Google Drive 規則</th></tr></thead>
+                    <tbody>
+                    <tr><td>進貨單 / 銷貨單 PDF</td><td>上傳至 ERPManager/進貨單 或 ERPManager/銷貨單；同資料夾、同檔名、同 driveFileId 覆蓋更新。</td></tr>
+                    <tr><td>作廢單據</td><td>不移動資料夾、不改檔名；重新產生 PDF 並加作廢浮水印後覆蓋雲端檔案。</td></tr>
+                    <tr><td>即時庫存</td><td>上傳至 ERPManager/即時庫存/realtime_inventory.xlsx，永遠保持最新一份。</td></tr>
+                    <tr><td>每日庫存表</td><td>上傳至 ERPManager/每日庫存表/YYYY/MM/YYYY-MM-DD_inventory.xlsx，不覆蓋歷史紀錄。</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

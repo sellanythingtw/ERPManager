@@ -1,39 +1,179 @@
-<!DOCTYPE html><html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><title>產品管理</title><link rel="stylesheet" href="/css/app.css"></head>
 <body><div class="app"><div th:replace="~{fragments :: sidebar('products')}"></div><main class="main">
-<div class="topbar"><div><h1>產品管理</h1><div class="subtitle">產品建檔與後續 Excel 匯入功能預留</div></div></div>
-<div class="card"><div class="card-header">新增 / 編輯產品</div><div class="card-body">
-<input id="productId" type="hidden"><div class="grid grid-4">
-<div><label>品號</label><input id="productCode" placeholder="空白則自動編號"></div>
-<div><label>類別</label><input id="category"></div>
-<div><label>品名</label><input id="productName"></div>
-<div><label>花名小名</label><input id="productAlias"></div>
-<div><label>規格</label><input id="specification"></div>
-<div><label>顏色</label><input id="color"></div>
-<div><label>單位</label><input id="unit" value="個"></div>
-<div><label>安全庫存</label><input id="safetyStock" type="number" value="0"></div>
-<div><label>預設進貨價</label><input id="defaultPurchasePrice" type="number" value="0"></div>
-<div><label>預設銷貨價</label><input id="defaultSalePrice" type="number" value="0"></div>
-</div><p><button class="btn-primary" onclick="saveProduct()">儲存產品</button></p><div id="msg"></div></div></div>
-<div class="card"><div class="card-header">產品列表</div><div class="card-body"><table><thead><tr><th>品號</th><th>類別</th><th>品名</th><th>小名</th><th>單位</th><th>安全庫存</th><th>操作</th></tr></thead><tbody><tr th:each="p : ${products}"><td th:text="${p.productCode}"></td><td th:text="${p.category}"></td><td th:text="${p.productName}"></td><td th:text="${p.productAlias}"></td><td th:text="${p.unit}"></td><td th:text="${p.safetyStock}"></td><td><button class="btn btn-outline" type="button" th:attr="data-id=${p.productId},data-code=${p.productCode},data-category=${p.category},data-name=${p.productName},data-alias=${p.productAlias},data-spec=${p.specification},data-color=${p.color},data-unit=${p.unit},data-safety=${p.safetyStock},data-purchase=${p.defaultPurchasePrice},data-sale=${p.defaultSalePrice}" onclick="editProduct(this)">編輯</button></td></tr></tbody></table></div></div>
+<div class="topbar">
+  <div><h1>產品管理</h1><div class="subtitle">預設顯示產品列表；右上新增，列表可編輯。</div></div>
+  <div class="topbar-action-wrap">
+  <div class="actions" id="listTopActions"><button class="btn btn-primary" type="button" onclick="newProduct()">新增產品</button></div>
+</div>
+</div>
+
+<div class="card no-print" id="searchCard">
+  <div class="card-header">查詢條件</div>
+  <div class="card-body">
+    <form method="get" action="/products" class="search-form">
+      <div class="grid grid-4">
+        <div><label>品號</label><input name="productCode" th:value="${productCode}" placeholder="輸入品號"></div>
+        <div><label>產品名稱</label><input name="productName" th:value="${productName}" placeholder="輸入產品名稱"></div>
+        <div><label>小名</label><input name="productAlias" th:value="${productAlias}" placeholder="輸入小名"></div>
+        <div><label>顏色</label><input name="color" th:value="${color}" placeholder="輸入顏色"></div>
+      </div>
+      <div class="actions form-actions-separated edit-form-actions"><button class="btn btn-primary" type="submit">查詢</button><a class="btn btn-outline" href="/products">清除</a></div>
+    </form>
+  </div>
+</div>
+
+<div class="card" id="editCard" style="display:none;">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;"><span id="editTitle">新增產品</span><div class="actions"><button id="voidBtn" class="btn btn-danger" type="button" style="display:none;" onclick="voidProduct()">作廢</button><button id="restoreBtn" class="btn btn-primary" type="button" style="display:none;" onclick="restoreProduct()">恢復</button></div></div>
+  <div class="card-body">
+    <input id="productId" type="hidden"><input id="active" type="hidden" value="true">
+    <div class="grid grid-4">
+      <div><label>品號</label><input id="productCode" placeholder="空白則自動編號"></div>
+      <div><label>類別</label><input id="category"></div>
+      <div><label>品名</label><input id="productName"></div>
+      <div><label>花名小名</label><input id="productAlias"></div>
+      <div><label>規格</label><input id="specification"></div>
+      <div><label>顏色</label><input id="color"></div>
+      <div><label>單位</label><input id="unit" value="個"></div>
+      <div><label>安全庫存</label><input id="safetyStock" type="number" value="0"></div>
+      <div><label>預設進貨價</label><input id="defaultPurchasePrice" type="number" value="0"></div>
+      <div><label>預設銷貨價</label><input id="defaultSalePrice" type="number" value="0"></div>
+      <div style="grid-column: span 2;"><label>備註</label><input id="note" placeholder="產品備註"></div>
+    </div>
+    <div class="actions form-actions-separated edit-form-actions"><button id="saveProductBtn" class="btn btn-primary" onclick="saveProduct()">儲存產品</button><a id="cancelBtn" class="btn btn-outline" href="/products">取消</a></div>
+    <div id="msg"></div>
+  </div>
+</div>
+
+
+<div class="card" id="stockMovementCard" style="display:none;">
+  <div class="card-header with-actions">
+    <span>庫存異動資訊</span>
+    <div class="actions no-print">
+      <button class="btn btn-outline btn-compact" type="button" onclick="openColumnChooser('productMovementTable')">顯示欄位</button>
+      <button class="btn btn-outline btn-compact" type="button" onclick="window.print()">列印</button>
+      <button class="btn btn-primary btn-compact" type="button" onclick="downloadTableCsv('productMovementTable', '產品庫存異動.csv')">下載</button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="grid grid-4 no-print">
+      <div><label>起始日期</label><input id="movementDateFrom" type="date"></div>
+      <div><label>結束日期</label><input id="movementDateTo" type="date"></div>
+      <div style="display:flex;align-items:end;"><button class="btn btn-primary" type="button" onclick="loadProductMovements()">查詢</button></div>
+    </div>
+    <div class="table-scroll vertical-scroll" style="margin-top:18px;">
+      <table id="productMovementTable" class="resizable-table filterable-table" data-table-key="product-movements">
+        <thead>
+        <tr>
+          <th data-sort="text" data-filterable="true" data-filter-label="日期">日期</th>
+          <th data-sort="text" data-filterable="true" data-filter-label="類型">類型</th>
+          <th data-sort="text" data-filterable="true" data-filter-label="來源單號">來源單號</th>
+          <th data-sort="text" data-filterable="true" data-filter-label="條碼">條碼</th>
+          <th data-sort="number" data-filterable="true" data-filter-label="入庫">入庫</th>
+          <th data-sort="number" data-filterable="true" data-filter-label="出庫">出庫</th>
+          <th data-sort="number" data-filterable="true" data-filter-label="單價">單價</th>
+          <th data-sort="text" data-filterable="true" data-filter-label="備註">備註</th>
+        </tr>
+        </thead>
+        <tbody id="productMovementBody">
+          <tr><td colspan="8">請先查看產品，再查詢庫存異動。</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<div class="card" id="listCard">
+  <div class="card-header with-actions">
+                <span>產品列表</span>
+                <div class="actions no-print">
+                    <button class="btn btn-outline btn-compact" type="button" onclick="openColumnChooser('productListTable')">顯示欄位</button>
+                    <button class="btn btn-outline btn-compact" type="button" onclick="window.print()">列印</button>
+                    <button class="btn btn-primary btn-compact" type="button" onclick="downloadTableCsv('productListTable', '產品列表.csv')">下載</button>
+                </div>
+            </div>
+  <div class="card-body table-scroll vertical-scroll">
+    <table id="productListTable" class="resizable-table" data-table-key="product-list">
+      <thead><tr><th>品號</th><th>類別</th><th>品名</th><th>小名</th><th>規格</th><th>顏色</th><th>單位</th><th>安全庫存</th><th>預設進貨價</th><th>預設銷貨價</th><th>備註</th><th>狀態</th><th>操作</th></tr></thead>
+      <tbody>
+      <tr th:each="p : ${products}">
+        <td th:text="${p.productCode}"></td><td th:text="${p.category}"></td><td th:text="${p.productName}"></td><td th:text="${p.productAlias}"></td><td th:text="${p.specification}"></td><td th:text="${p.color}"></td><td th:text="${p.unit}"></td><td th:text="${p.safetyStock}"></td><td th:text="${p.defaultPurchasePrice}"></td><td th:text="${p.defaultSalePrice}"></td><td th:text="${p.note}"></td><td><span class="badge" th:classappend="${p.active == false ? ' badge-danger' : ' badge-success'}" th:text="${p.active == false ? '已作廢' : '正常'}"></span></td>
+        <td><div class="list-row-actions"><button class="btn btn-outline" type="button" th:attr="data-id=${p.productId},data-code=${p.productCode},data-category=${p.category},data-name=${p.productName},data-alias=${p.productAlias},data-spec=${p.specification},data-color=${p.color},data-unit=${p.unit},data-safety=${p.safetyStock},data-purchase=${p.defaultPurchasePrice},data-sale=${p.defaultSalePrice},data-note=${p.note},data-active=${p.active}" onclick="viewProduct(this)">查看</button><button class="btn btn-primary" type="button" th:attr="data-id=${p.productId},data-code=${p.productCode},data-category=${p.category},data-name=${p.productName},data-alias=${p.productAlias},data-spec=${p.specification},data-color=${p.color},data-unit=${p.unit},data-safety=${p.safetyStock},data-purchase=${p.defaultPurchasePrice},data-sale=${p.defaultSalePrice},data-note=${p.note},data-active=${p.active}" onclick="editProduct(this)">編輯</button></div></td>
+      </tr>
+      <tr th:if="${#lists.isEmpty(products)}"><td colspan="13">無符合條件資料。</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <script>
 async function saveProduct(){
- const body={productId:val('productId')||null,productCode:val('productCode'),category:val('category'),productName:val('productName'),productAlias:val('productAlias'),specification:val('specification'),color:val('color'),unit:val('unit'),safetyStock:Number(val('safetyStock')),defaultPurchasePrice:Number(val('defaultPurchasePrice')),defaultSalePrice:Number(val('defaultSalePrice'))};
- const r=await fetch('/api/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); const j=await r.json(); document.getElementById('msg').innerHTML='<div class="alert alert-info">'+j.message+'</div>'; if(j.success) setTimeout(()=>location.reload(),600);
-} function editProduct(btn){
- document.getElementById('productId').value=btn.dataset.id||'';
- document.getElementById('productCode').value=btn.dataset.code||'';
- document.getElementById('category').value=btn.dataset.category||'';
- document.getElementById('productName').value=btn.dataset.name||'';
- document.getElementById('productAlias').value=btn.dataset.alias||'';
- document.getElementById('specification').value=btn.dataset.spec||'';
- document.getElementById('color').value=btn.dataset.color||'';
- document.getElementById('unit').value=btn.dataset.unit||'';
- document.getElementById('safetyStock').value=btn.dataset.safety||0;
- document.getElementById('defaultPurchasePrice').value=btn.dataset.purchase||0;
- document.getElementById('defaultSalePrice').value=btn.dataset.sale||0;
- window.scrollTo({top:0,behavior:'smooth'});
+ const body={productId:val('productId')||null,productCode:val('productCode'),category:val('category'),productName:val('productName'),productAlias:val('productAlias'),specification:val('specification'),color:val('color'),unit:val('unit'),safetyStock:Number(val('safetyStock')||0),defaultPurchasePrice:Number(val('defaultPurchasePrice')||0),defaultSalePrice:Number(val('defaultSalePrice')||0),note:val('note'),active:val('active')!=='false'};
+ const r=await fetch('/api/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ const j=await r.json();document.getElementById('msg').innerHTML='<div class="alert alert-info">'+j.message+'</div>';if(j.success)setTimeout(()=>location.href='/products',600);
 }
+function showEdit(){document.getElementById('editCard').style.display='block';document.getElementById('listCard').style.display='none';document.getElementById('searchCard').style.display='none';document.getElementById('stockMovementCard').style.display='none';document.getElementById('listTopActions').hidden=true;updateStatusButtons();window.scrollTo({top:0,behavior:'smooth'});}
+let currentProductButton=null;function ensureViewTopActions(){
+  let el=document.getElementById('viewTopActions');
+  if(!el){
+    el=document.createElement('div');
+    el.id='viewTopActions';
+    el.className='actions';
+    el.innerHTML='<a class="btn btn-outline" href="/products">返回列表</a><button class="btn btn-primary" type="button" onclick="editProductFromView()">編輯</button>';
+    document.querySelector('.topbar-action-wrap').appendChild(el);
+  }
+  return el;
+}
+function removeViewTopActions(){
+  const el=document.getElementById('viewTopActions');
+  if(el) el.remove();
+}
+function setReadonlyMode(readonly){['productCode','category','productName','productAlias','specification','color','unit','safetyStock','defaultPurchasePrice','defaultSalePrice','note'].forEach(id=>document.getElementById(id).readOnly=readonly);document.getElementById('saveProductBtn').style.display=readonly?'none':'inline-flex';document.getElementById('cancelBtn').style.display=readonly?'none':'inline-flex';}
+function newProduct(){removeViewTopActions();currentProductButton=null;removeViewTopActions();document.getElementById('editTitle').innerText='新增產品';setReadonlyMode(false);clearProduct();showEdit();}
+function clearProduct(){['productId','productCode','category','productName','productAlias','specification','color','note'].forEach(id=>document.getElementById(id).value='');document.getElementById('active').value='true';document.getElementById('unit').value='個';document.getElementById('safetyStock').value=0;document.getElementById('defaultPurchasePrice').value=0;document.getElementById('defaultSalePrice').value=0;}
+function fillProduct(btn){document.getElementById('productId').value=btn.dataset.id||'';document.getElementById('productCode').value=btn.dataset.code||'';document.getElementById('category').value=btn.dataset.category||'';document.getElementById('productName').value=btn.dataset.name||'';document.getElementById('productAlias').value=btn.dataset.alias||'';document.getElementById('specification').value=btn.dataset.spec||'';document.getElementById('color').value=btn.dataset.color||'';document.getElementById('unit').value=btn.dataset.unit||'個';document.getElementById('safetyStock').value=btn.dataset.safety||0;document.getElementById('defaultPurchasePrice').value=btn.dataset.purchase||0;document.getElementById('defaultSalePrice').value=btn.dataset.sale||0;document.getElementById('note').value=btn.dataset.note||'';document.getElementById('active').value=String(btn.dataset.active)==='false'?'false':'true';updateStatusButtons();}
+function editProduct(btn){currentProductButton=btn;removeViewTopActions();document.getElementById('editTitle').innerText='編輯產品';setReadonlyMode(false);showEdit();fillProduct(btn);}
+function viewProduct(btn){currentProductButton=btn;document.getElementById('editTitle').innerText='查看產品';setReadonlyMode(true);showEdit();fillProduct(btn);document.getElementById('voidBtn').style.display='none';document.getElementById('restoreBtn').style.display='none';document.getElementById('stockMovementCard').style.display='block';ensureViewTopActions();loadProductMovements();}
+function editProductFromView(){if(currentProductButton){editProduct(currentProductButton);}}
+function updateStatusButtons(){const id=val('productId');const active=val('active')!=='false';document.getElementById('voidBtn').style.display=id&&active?'inline-flex':'none';document.getElementById('restoreBtn').style.display=id&&!active?'inline-flex':'none';}
+async function voidProduct(){const id=val('productId');if(!id)return;if(!confirm('確定作廢此產品？'))return;const r=await fetch('/api/products/'+id+'/void',{method:'POST'});const j=await r.json();document.getElementById('msg').innerHTML='<div class="alert alert-info">'+j.message+'</div>';if(j.success)setTimeout(()=>location.href='/products',600);}
+async function restoreProduct(){const id=val('productId');if(!id)return;const r=await fetch('/api/products/'+id+'/restore',{method:'POST'});const j=await r.json();document.getElementById('msg').innerHTML='<div class="alert alert-info">'+j.message+'</div>';if(j.success)setTimeout(()=>location.href='/products',600);}
+
+async function loadProductMovements(){
+  const id = val('productId');
+  const body = document.getElementById('productMovementBody');
+  if(!id){ body.innerHTML='<tr><td colspan="8">請先查看產品。</td></tr>'; return; }
+  const from = document.getElementById('movementDateFrom').value;
+  const to = document.getElementById('movementDateTo').value;
+  const qs = new URLSearchParams();
+  if(from) qs.append('dateFrom', from);
+  if(to) qs.append('dateTo', to);
+  const r = await fetch('/api/products/' + encodeURIComponent(id) + '/stock-movements?' + qs.toString());
+  const j = await r.json();
+  const rows = j.data || [];
+  if(!rows.length){
+    body.innerHTML='<tr><td colspan="8">此區間無庫存異動。</td></tr>';
+    return;
+  }
+  body.innerHTML = rows.map(row => {
+    const source = row.sourceLink ? `<a href="${row.sourceLink}">${escapeHtml(row.sourceNo)}</a>` : escapeHtml(row.sourceNo);
+    return `<tr>
+      <td>${escapeHtml(row.movementDate)}</td>
+      <td>${escapeHtml(row.movementType)}</td>
+      <td>${source}</td>
+      <td>${escapeHtml(row.barcodeValue)}</td>
+      <td>${escapeHtml(row.quantityIn)}</td>
+      <td>${escapeHtml(row.quantityOut)}</td>
+      <td>${escapeHtml(row.unitPrice)}</td>
+      <td>${escapeHtml(row.note)}</td>
+    </tr>`;
+  }).join('');
+}
+function escapeHtml(s){return String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
 function val(id){return document.getElementById(id).value;}
 </script>
-</main></div></body></html>
+</main></div><script src="/js/table-tools.js"></script>
+</body></html>

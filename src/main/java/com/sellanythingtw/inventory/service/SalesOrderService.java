@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,6 +46,7 @@ public class SalesOrderService {
     }
 
     public SalesOrder createDraft(Long customerId, LocalDate salesDate) {
+        if (customerId == null) throw new IllegalArgumentException("客戶為必填，請雙擊查詢並選擇客戶");
         LocalDate today = LocalDate.now();
         SalesOrder order = new SalesOrder();
         order.setSalesNo(sequenceService.nextDocumentNo("SO", today.format(YMD)));
@@ -56,8 +58,101 @@ public class SalesOrderService {
         return salesOrderRepository.save(order);
     }
 
+    @Transactional
+    public SalesOrder updateDraftHeader(Long salesId, Long customerId, LocalDate salesDate) {
+        return updateHeader(salesId, customerId, salesDate);
+    }
+
+    private SalesOrder regenerateSalesPdf(SalesOrder order) {
+        order.setPdfUpdatedAt(LocalDateTime.now());
+        order = salesOrderRepository.save(order);
+
+        List<SalesOrderItem> items = itemRepository.findBySalesIdOrderBySortOrderAsc(order.getSalesId());
+        Customer customer = customerRepository.findById(order.getCustomerId() == null ? -1L : order.getCustomerId()).orElse(null);
+        String pdfPath = pdfService.createSalesOrderPdf(order, items, customer);
+        order.setPdfPath(pdfPath);
+        order = salesOrderRepository.save(order);
+        cloudSyncService.uploadPdfIfEnabled("SALES", order.getSalesId(), pdfPath, customer == null ? "未指定客戶" : customer.getCustomerName());
+        return order;
+    }
+
+    @Transactional
+    public SalesOrder updateHeader(Long salesId, Long customerId, LocalDate salesDate) {
+        if (customerId == null) throw new IllegalArgumentException("客戶為必填，請雙擊查詢並選擇客戶");
+        SalesOrder order = getOrder(salesId);
+        if ("VOID".equals(order.getStatus())) throw new IllegalStateException("已作廢銷貨單不可修改");
+        order.setCustomerId(customerId);
+        if (salesDate != null) order.setSalesDate(salesDate);
+        order = salesOrderRepository.save(order);
+        if ("CONFIRMED".equals(order.getStatus())) {
+            order = regenerateSalesPdf(order);
+        }
+        return order;
+    }
+
+    @Transactional
+    public SalesOrder createWithFirstItem(Long customerId,
+                                          LocalDate salesDate,
+                                          String barcodeValue,
+                                          Integer quantity,
+                                          String itemNote,
+                                          String paymentType,
+                                          String paymentStatus,
+                                          boolean confirmImmediately) {
+        SalesOrder order = createDraft(customerId, salesDate);
+        if (barcodeValue != null && !barcodeValue.trim().isEmpty()) {
+            addItemByBarcode(order.getSalesId(), barcodeValue.trim(), quantity == null ? 1 : quantity, itemNote);
+        }
+        if (confirmImmediately) {
+            return confirm(order.getSalesId(), paymentType, paymentStatus);
+        }
+        return getOrder(order.getSalesId());
+    }
+
     public List<SalesOrder> listAll() {
         return salesOrderRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+
+    public List<Map<String, Object>> searchRows(String keyword,
+                                                String customerCode,
+                                                String customerName,
+                                                String status,
+                                                LocalDate dateFrom,
+                                                LocalDate dateTo) {
+        return salesOrderRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(order -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    Customer customer = customerRepository.findById(order.getCustomerId() == null ? -1L : order.getCustomerId()).orElse(null);
+                    row.put("order", order);
+                    row.put("customer", customer);
+                    return row;
+                })
+                .filter(row -> {
+                    SalesOrder order = (SalesOrder) row.get("order");
+                    Customer customer = (Customer) row.get("customer");
+                    if (hasText(status) && !status.equals(order.getStatus())) return false;
+                    if (dateFrom != null && order.getSalesDate() != null && order.getSalesDate().isBefore(dateFrom)) return false;
+                    if (dateTo != null && order.getSalesDate() != null && order.getSalesDate().isAfter(dateTo)) return false;
+                    if (hasText(customerCode) && (customer == null || !safe(customer.getCustomerCode()).contains(customerCode.trim()))) return false;
+                    if (hasText(customerName) && (customer == null || !safe(customer.getCustomerName()).contains(customerName.trim()))) return false;
+                    if (hasText(keyword)) {
+                        String k = keyword.trim().toLowerCase();
+                        String haystack = (safe(order.getSalesNo()) + " " + safe(order.getStatus()) + " " + safe(order.getPaymentType()) + " "
+                                + (customer == null ? "" : safe(customer.getCustomerCode()) + " " + safe(customer.getCustomerName()))).toLowerCase();
+                        if (!haystack.contains(k)) return false;
+                    }
+                    return true;
+                })
+                .toList();
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
     }
 
 
@@ -98,7 +193,7 @@ public class SalesOrderService {
     }
 
     @Transactional
-    public SalesOrderItem addItemByBarcode(Long salesId, String barcodeValue, int quantity) {
+    public SalesOrderItem addItemByBarcode(Long salesId, String barcodeValue, int quantity, String itemNote) {
         if (quantity <= 0) throw new IllegalArgumentException("銷貨數量必須大於 0");
         SalesOrder order = salesOrderRepository.findById(salesId)
                 .orElseThrow(() -> new IllegalArgumentException("找不到銷貨單"));
@@ -124,6 +219,7 @@ public class SalesOrderService {
         item.setQuantity(quantity);
         item.setAmount(lot.getSalePrice().multiply(BigDecimal.valueOf(quantity)));
         item.setSortOrder(itemRepository.findBySalesIdOrderBySortOrderAsc(salesId).size() + 1);
+        item.setItemNote(itemNote == null ? "" : itemNote.trim());
         SalesOrderItem saved = itemRepository.save(item);
         recalculateAndSave(order);
         return saved;
@@ -177,7 +273,9 @@ public class SalesOrderService {
         if ("VOID".equals(order.getStatus())) return order;
         if ("DRAFT".equals(order.getStatus())) throw new IllegalStateException("草稿請使用刪除草稿，不需作廢");
         order.setStatus("VOID");
-        return salesOrderRepository.save(order);
+        order.setVoidedAt(LocalDateTime.now());
+        order = salesOrderRepository.save(order);
+        return regenerateSalesPdf(order);
     }
 
     @Transactional
@@ -185,11 +283,13 @@ public class SalesOrderService {
         SalesOrder order = getOrder(salesId);
         if (!"VOID".equals(order.getStatus())) return order;
         order.setStatus("CONFIRMED");
-        return salesOrderRepository.save(order);
+        order.setRestoredAt(LocalDateTime.now());
+        order = salesOrderRepository.save(order);
+        return regenerateSalesPdf(order);
     }
 
     @Transactional
-    public SalesOrder confirm(Long salesId, String paymentType) {
+    public SalesOrder confirm(Long salesId, String paymentType, String paymentStatus) {
         SalesOrder order = salesOrderRepository.findById(salesId)
                 .orElseThrow(() -> new IllegalArgumentException("找不到銷貨單"));
         if (!"DRAFT".equals(order.getStatus())) throw new IllegalStateException("只有草稿銷貨單可以確認");
@@ -234,7 +334,8 @@ public class SalesOrderService {
         order.setTotalAmount(subtotal.add(tax));
         order.setTotalQuantity(totalQuantity);
         order.setPaymentType(paymentType == null || paymentType.isBlank() ? "CASH" : paymentType);
-        if ("CREDIT".equals(order.getPaymentType())) {
+        boolean unpaid = "UNPAID".equals(paymentStatus) || "CREDIT".equals(order.getPaymentType());
+        if (unpaid) {
             order.setPaidAmount(BigDecimal.ZERO);
             order.setUnpaidAmount(order.getTotalAmount());
             order.setPaymentStatus("UNPAID");
@@ -246,11 +347,7 @@ public class SalesOrderService {
         order.setStatus("CONFIRMED");
         order = salesOrderRepository.save(order);
 
-        Customer customer = customerRepository.findById(order.getCustomerId()).orElse(null);
-        String pdfPath = pdfService.createSalesOrderPdf(order, items, customer);
-        order.setPdfPath(pdfPath);
-        order = salesOrderRepository.save(order);
-        cloudSyncService.uploadPdfIfEnabled("SALES", order.getSalesId(), pdfPath, customer == null ? "未指定客戶" : customer.getCustomerName());
+        order = regenerateSalesPdf(order);
         return order;
     }
 }

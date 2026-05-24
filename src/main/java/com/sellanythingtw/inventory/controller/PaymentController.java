@@ -24,7 +24,7 @@ public class PaymentController {
                               @RequestParam(required = false) String customerName,
                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
-                              @RequestParam(required = false, defaultValue = "UNPAID") String paymentStatus,
+                              @RequestParam(required = false) String paymentStatus,
                               @RequestParam(required = false) String paymentType,
                               Model model) {
         model.addAttribute("rows", paymentService.searchReceivables(customerCode, customerName, dateFrom, dateTo, paymentStatus, paymentType));

@@ -12,38 +12,110 @@
         <div class="topbar">
             <div>
                 <h1>新增銷貨單</h1>
-                <div class="subtitle">直接建立銷貨草稿，日期預設今天；客戶可先空白，稍後於草稿中編輯。</div>
+                <div class="subtitle">新增時直接填寫表頭與銷貨品項，可儲存草稿或直接確認銷貨。</div>
             </div>
-            <div><a class="btn btn-outline" href="/sales">返回銷貨單列表</a></div>
+            <div class="actions"><a class="btn btn-outline" href="/sales">取消新增</a></div>
         </div>
 
-        <div class="card">
-            <div class="card-header">建立銷貨草稿</div>
-            <div class="card-body">
-                <form method="post" action="/sales/draft">
-                    <div class="grid grid-3">
+        <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+        <form method="post" action="/sales/create-full">
+            <div class="card doc-section-card">
+                <div class="card-header">單據表頭</div>
+                <div class="card-body">
+                    <div class="grid grid-4">
                         <div>
-                            <label>客戶</label>
-                            <select name="customerId">
-                                <option value="">未指定，稍後再選</option>
-                                <option th:each="c : ${customers}" th:value="${c.customerId}" th:text="${c.customerCode + '｜' + c.customerName}"></option>
-                            </select>
+                            <label class="required-label">客戶代號</label>
+                            <input id="customerId" name="customerId" type="hidden" data-required-lookup="true" data-error-target="salesCustomerCode">
+                            <input id="salesCustomerCode" data-lookup="customers" data-fill="code" data-target-id="customerId" data-pair-code="salesCustomerCode" data-pair-name="salesCustomerName" placeholder="輸入後雙擊查詢">
+                        </div>
+                        <div>
+                            <label class="required-label">客戶名稱</label>
+                            <input id="salesCustomerName" data-lookup="customers" data-fill="name" data-target-id="customerId" data-pair-code="salesCustomerCode" data-pair-name="salesCustomerName" placeholder="輸入後雙擊查詢">
                         </div>
                         <div>
                             <label>銷貨日期</label>
                             <input name="salesDate" type="date" th:value="${#temporals.format(today, 'yyyy-MM-dd')}">
                         </div>
-                        <div style="display:flex;align-items:end;">
-                            <button class="btn-primary" type="submit">儲存草稿</button>
+                        <div>
+                            <label>付款類型</label>
+                            <select name="paymentType">
+                                <option value="CASH">現金</option>
+                                <option value="TRANSFER">轉帳</option>
+                                <option value="CREDIT">欠款</option>
+                            </select>
                         </div>
                     </div>
-                </form>
-                <div class="alert alert-info">
-                    銷貨前需先有已確認進貨批次，才能刷貼紙條碼出貨。
+                    <div class="grid grid-4" style="margin-top:14px;">
+                        <div>
+                            <label>付款狀況</label>
+                            <select name="paymentStatus">
+                                <option value="PAID">已付款</option>
+                                <option value="UNPAID">待付款</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <div class="card doc-section-card">
+                <div class="card-header">銷貨品項</div>
+                <div class="card-body">
+                    <div class="alert alert-info">可先不輸入條碼直接儲存草稿；若要直接確認銷貨，至少需輸入一筆有效條碼與數量。</div>
+                    <div class="grid grid-4">
+                        <div><label>條碼</label><input id="barcodeInput" name="barcodeValue" placeholder="請刷入或輸入條碼"></div>
+                        <div><label>品名</label><input id="lookupName" readonly></div>
+                        <div><label>剩餘數量</label><input id="lookupQty" readonly></div>
+                        <div><label>銷售單價</label><input id="lookupPrice" readonly></div>
+                    </div>
+                    <div class="grid grid-4" style="margin-top:14px;">
+                        <div><label>銷貨數量</label><input id="quantityInput" name="quantity" type="number" min="1" value="1"></div>
+                        <div><label>品項備註</label><input name="itemNote" placeholder="此品項備註"></div>
+                    </div>
+                    <div id="scanMsg" class="alert alert-info">刷入條碼後可按 Enter 查詢品項，也可直接送出儲存草稿。</div>
+                </div>
+            </div>
+
+            <div class="page-bottom-actions">
+                <button class="btn btn-primary" name="action" value="draft" type="submit">儲存草稿</button>
+                <button class="btn btn-outline" name="action" value="confirm" type="submit" onclick="return confirm('確認銷貨後會扣除批次庫存，是否繼續？')">儲存並確認銷貨</button>
+            </div>
+        </form>
     </main>
 </div>
+<script src="/js/lookup-modal.js"></script>
+<script>
+const barcodeInput = document.getElementById('barcodeInput');
+const msg = document.getElementById('scanMsg');
+async function lookupBarcode(code) {
+    if (!code) return;
+    try {
+        const r = await fetch('/api/sales/barcode/' + encodeURIComponent(code));
+        const j = await r.json();
+        if (!j.success) throw new Error(j.message || '查詢失敗');
+        const d = j.data;
+        document.getElementById('lookupName').value = d.productName + (d.productAlias ? ' ' + d.productAlias : '');
+        document.getElementById('lookupQty').value = d.remainingQuantity;
+        document.getElementById('lookupPrice').value = d.salePrice;
+        document.getElementById('quantityInput').max = d.remainingQuantity;
+        msg.className = 'alert alert-info';
+        msg.innerText = '已帶入品項，請確認數量後儲存。';
+    } catch (err) {
+        msg.className = 'alert alert-error';
+        msg.innerText = err.message;
+    }
+}
+if (barcodeInput) {
+    barcodeInput.addEventListener('keydown', async function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            await lookupBarcode(barcodeInput.value.trim());
+        }
+    });
+    barcodeInput.addEventListener('change', function() {
+        lookupBarcode(barcodeInput.value.trim());
+    });
+}
+</script>
 </body>
 </html>

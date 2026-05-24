@@ -43,7 +43,10 @@ td { padding:12px; border-bottom:1px solid #e5e7eb; font-size:14px; }
   table { font-size: 12px; }
   th, td { padding: 6px; }
 }
-.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.actions form { margin: 0; display: flex; align-items: center; }
+.actions .btn, .actions button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; line-height: 1.2; }
+
 .inline-actions { margin-bottom:14px; display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
 .btn-primary:hover { background:#1d4ed8; }
 .btn-outline:hover { background:#f3f4f6; }
@@ -51,3 +54,1055 @@ td { padding:12px; border-bottom:1px solid #e5e7eb; font-size:14px; }
 .table-actions { display:flex; gap:8px; align-items:center; }
 .btn-danger { background:#dc2626; color:#fff; }
 .btn-danger:hover { background:#b91c1c; }
+
+/* Purchase detail top action buttons
+   Keep <a class="btn"> and <button class="btn"> visually identical.
+   This fixes the "作廢單據" button text/width mismatch caused by browser button defaults. */
+.purchase-top-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.purchase-top-actions form {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.purchase-top-actions .btn,
+.purchase-top-actions button.btn {
+  min-width: 128px;
+  height: 48px;
+  padding: 0 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.purchase-top-actions a.btn {
+  text-decoration: none;
+}
+
+.purchase-top-actions button.btn {
+  border: 0;
+}
+/* End purchase detail top action buttons */
+
+
+/* Fixed, consistent action buttons */
+.topbar .actions,
+.purchase-top-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.topbar .actions form,
+.purchase-top-actions form {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.topbar .actions .btn,
+.topbar .actions button,
+.topbar .actions button.btn,
+.purchase-top-actions .btn,
+.purchase-top-actions button,
+.purchase-top-actions button.btn {
+  width: 128px !important;
+  min-width: 128px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  padding: 0 18px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  text-decoration: none !important;
+}
+
+.btn-danger { background:#dc2626; color:#fff; }
+.btn-danger:hover { background:#b91c1c; }
+
+.search-form .grid { margin-bottom: 14px; }
+.no-print-inline { display: inline-flex; gap: 10px; align-items: center; }
+.inventory-low { color: #dc2626; font-weight: 800; }
+.inventory-status { font-weight: 800; }
+.table-scroll { overflow-x: auto; }
+
+
+/* Lookup modal and form spacing */
+.search-form .actions {
+  margin-top: 18px;
+}
+
+.lookup-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.lookup-field input[data-lookup] {
+  background: #fff;
+}
+
+input[readonly],
+input.readonly-field {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.lookup-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.35);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.lookup-modal {
+  width: min(720px, 96vw);
+  max-height: 82vh;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 22px 70px rgba(15, 23, 42, 0.25);
+  border: 1px solid #e5e7eb;
+}
+
+.lookup-modal-header {
+  padding: 16px 18px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lookup-modal-body {
+  padding: 18px;
+}
+
+.lookup-actions {
+  margin-top: 12px;
+}
+
+.lookup-results {
+  margin-top: 14px;
+  max-height: 48vh;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.lookup-row {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 0;
+  background: #fff;
+  text-align: left;
+  padding: 12px 14px;
+  color: #111827;
+  display: block;
+}
+
+.lookup-row:hover {
+  background: #eff6ff;
+}
+
+.lookup-empty {
+  padding: 14px;
+  color: #6b7280;
+}
+
+
+/* v0.0.1 UI corrections */
+.search-form .actions {
+  margin-top: 22px !important;
+  padding-top: 2px;
+}
+
+.field-error {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220,38,38,.12);
+}
+
+.field-error-text,
+.required-hint {
+  margin-top: 6px;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.required-label::after {
+  content: " *必填";
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.topbar .actions,
+.purchase-top-actions {
+  display: flex !important;
+  gap: 14px !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex-wrap: wrap !important;
+}
+
+.topbar .actions form,
+.purchase-top-actions form {
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.topbar .actions a.btn,
+.topbar .actions button,
+.topbar .actions button.btn,
+.purchase-top-actions a.btn,
+.purchase-top-actions button,
+.purchase-top-actions button.btn {
+  width: 136px !important;
+  min-width: 136px !important;
+  height: 50px !important;
+  min-height: 50px !important;
+  padding: 0 18px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  text-decoration: none !important;
+  border-radius: 10px !important;
+}
+
+.lookup-modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.lookup-modal {
+  margin: auto !important;
+}
+
+input[readonly],
+input.readonly-field {
+  background: #f3f4f6 !important;
+  color: #374151;
+}
+
+
+/* v0.0.24 spacing corrections */
+.search-form .grid + .grid {
+  margin-top: 18px !important;
+}
+
+.search-form .actions {
+  margin-top: 28px !important;
+  padding-top: 8px !important;
+}
+
+.inventory-search-form .actions {
+  margin-top: 32px !important;
+  padding-top: 10px !important;
+}
+
+.form-actions-separated {
+  margin-top: 22px !important;
+}
+
+.lookup-pair-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1000px) {
+  .lookup-pair-grid { grid-template-columns: 1fr; }
+}
+
+
+/* v0.0.24: topbar buttons use the same compact size as general action buttons */
+.topbar .actions,
+.purchase-top-actions {
+  display: flex !important;
+  gap: 10px !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.topbar .actions form,
+.purchase-top-actions form {
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.topbar .actions a.btn,
+.topbar .actions button,
+.topbar .actions button.btn,
+.purchase-top-actions a.btn,
+.purchase-top-actions button,
+.purchase-top-actions button.btn {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 10px 18px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  text-decoration: none !important;
+  border-radius: 10px !important;
+}
+
+.topbar .actions .btn-primary,
+.purchase-top-actions .btn-primary { color: #fff !important; }
+
+.page-bottom-actions {
+  margin-top: 22px !important;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+
+/* v0.0.24: compact PDF buttons in purchase detail view */
+.btn-compact {
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+
+/* v0.0.24: search actions slightly closer to input rows */
+.search-form .actions {
+  margin-top: 18px !important;
+  padding-top: 2px !important;
+}
+
+.inventory-search-form .actions {
+  margin-top: 22px !important;
+  padding-top: 4px !important;
+}
+
+/* v0.0.24: document edit/new sections should read as white continuous form areas */
+.doc-section-card {
+  background: #fff !important;
+  box-shadow: none !important;
+  border-color: #fff !important;
+  border-radius: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.doc-section-card + .doc-section-card {
+  margin-top: 0 !important;
+}
+
+.doc-section-card .card-header {
+  background: #fff !important;
+}
+
+.card-header.with-actions {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+
+/* v0.0.24: search buttons slightly higher and consistent query controls */
+.search-form .actions,
+.form-actions-separated {
+  margin-top: 10px !important;
+  padding-top: 0 !important;
+}
+
+.inventory-search-form .actions {
+  margin-top: 14px !important;
+  padding-top: 0 !important;
+}
+
+/* Keep action buttons inside card headers aligned to the far right, like master-data edit pages. */
+.card-header.with-actions > .actions {
+  margin-left: auto !important;
+  justify-content: flex-end !important;
+}
+
+/* Make title-and-action card headers span like a toolbar. */
+.card-header.with-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+/* Slightly increase spacing between table action buttons such as 查看 / 編輯. */
+td .btn + .btn,
+td a.btn + a.btn,
+td a.btn + form,
+td form + a.btn {
+  margin-left: 10px !important;
+}
+
+/* Normalize date controls so yyyy / mm / dd presentation is more consistent. */
+input[type="date"] {
+  min-width: 0 !important;
+  font-variant-numeric: tabular-nums !important;
+  font-feature-settings: "tnum" 1 !important;
+  letter-spacing: 0 !important;
+}
+
+.search-form input[type="date"] {
+  width: 100% !important;
+}
+
+
+/* v0.0.24 final layout overrides */
+.search-form .actions,
+.form-actions-separated,
+.inventory-search-form .actions {
+  margin-top: 4px !important;
+  padding-top: 0 !important;
+}
+
+.search-form .grid {
+  margin-bottom: 8px !important;
+}
+
+.search-form .grid + .grid {
+  margin-top: 10px !important;
+}
+
+/* Title action button must sit at the far right of the card header. */
+.card-header.with-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.card-header.with-actions > span {
+  flex: 0 0 auto !important;
+}
+
+.card-header.with-actions > .actions,
+.card-header.with-actions > .title-actions {
+  margin-left: auto !important;
+  display: inline-flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+/* Explicit row-action spacing for list pages. */
+.list-row-actions {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  flex-wrap: nowrap !important;
+}
+
+.list-row-actions .btn {
+  margin-left: 0 !important;
+}
+
+/* Better alignment of browser date placeholder segments. */
+input[type="date"] {
+  font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+  font-feature-settings: "tnum" 1 !important;
+  letter-spacing: 0 !important;
+}
+
+input[type="date"]::-webkit-datetime-edit-year-field,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field {
+  min-width: 3.2ch !important;
+  text-align: center !important;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  padding: 0 0.25ch !important;
+}
+
+
+/* v0.0.24: larger gap between master-data edit fields and save/cancel buttons */
+.edit-form-actions {
+  margin-top: 32px !important;
+  padding-top: 0 !important;
+}
+
+/* v0.0.24: master list row action spacing */
+.list-row-actions {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  flex-wrap: nowrap !important;
+}
+
+
+/* v0.0.24: master-data view topbar and inventory Excel-like controls */
+.excel-filter-bar {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.excel-filter-bar input {
+  max-width: 360px;
+}
+
+.excel-table th[data-sort]::after {
+  content: " ⇅";
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.excel-table th[data-dir="asc"]::after {
+  content: " ↑";
+}
+
+.excel-table th[data-dir="desc"]::after {
+  content: " ↓";
+}
+
+#viewTopActions {
+  align-items: center;
+  gap: 10px;
+}
+
+
+/* v0.0.24: master view topbar wrapper and inventory column filter */
+.topbar-action-wrap {
+  margin-left: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.topbar-action-wrap .actions {
+  justify-content: flex-end !important;
+}
+
+.inventory-table-scroll {
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.excel-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.excel-filter-trigger {
+  width: 26px !important;
+  min-width: 26px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  margin-left: 6px;
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  background: #fff;
+  color: #374151;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+.excel-filter-menu {
+  position: fixed;
+  z-index: 100000;
+  width: 320px;
+  max-height: 520px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.25);
+  padding: 14px;
+}
+
+.excel-filter-menu-title {
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.excel-filter-search {
+  margin: 8px 0 10px;
+}
+
+.excel-filter-options {
+  max-height: 300px;
+  overflow: auto;
+  padding: 4px 0;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.excel-filter-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 4px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.excel-filter-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.excel-filter-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.excel-table th[data-dir="asc"]::after,
+.excel-table th[data-dir="desc"]::after,
+.excel-table th[data-sort]::after {
+  content: "" !important;
+}
+
+
+/* v0.0.24: force hidden master-data topbar actions to stay hidden despite previous !important .topbar .actions rules */
+[hidden] {
+  display: none !important;
+}
+
+.topbar-action-wrap {
+  margin-left: auto !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+}
+
+.topbar-action-wrap .actions {
+  justify-content: flex-end !important;
+}
+
+
+/* v0.0.24: master-data topbar actions are mode-specific.
+   viewTopActions is created dynamically only in 查看 mode; guard against display overrides. */
+#viewTopActions[hidden],
+#viewTopActions.is-hidden,
+.topbar-action-wrap > .actions[hidden] {
+  display: none !important;
+}
+
+
+/* v0.0.24: resizable/persistent tables and Excel-like column filters */
+.table-scroll,
+.inventory-table-scroll,
+.vertical-scroll {
+  overflow: auto !important;
+  max-width: 100%;
+}
+
+.vertical-scroll {
+  max-height: 70vh;
+}
+
+.resizable-table {
+  width: max-content !important;
+  min-width: 100%;
+  table-layout: fixed !important;
+}
+
+.resizable-table th,
+.resizable-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resizable-th {
+  position: relative;
+}
+
+.column-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  z-index: 7;
+}
+
+.column-resizer:hover {
+  background: rgba(37, 99, 235, .22);
+}
+
+body.resizing-column {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+.inventory-table-scroll thead th,
+.excel-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+}
+
+.filterable-th {
+  position: relative;
+}
+
+.excel-filter-trigger,
+.filter-clear {
+  width: 22px !important;
+  min-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  padding: 0 !important;
+  margin-left: 5px;
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  background: #fff;
+  color: #374151;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  vertical-align: middle;
+}
+
+.filter-clear {
+  color: #dc2626;
+  border-color: #fecaca;
+  font-weight: 900 !important;
+}
+
+.sortable-th {
+  cursor: pointer;
+}
+
+.sortable-th[data-dir="asc"]::after {
+  content: " ↑";
+  color: #2563eb;
+}
+
+.sortable-th[data-dir="desc"]::after {
+  content: " ↓";
+  color: #2563eb;
+}
+
+.excel-filter-menu {
+  position: fixed;
+  z-index: 100000;
+  width: 320px;
+  max-height: 520px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.25);
+  padding: 14px;
+}
+
+.excel-filter-menu-title {
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.excel-filter-search {
+  margin: 8px 0 10px;
+}
+
+.excel-filter-options {
+  max-height: 300px;
+  overflow: auto;
+  padding: 4px 0;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.excel-filter-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 4px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.excel-filter-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.excel-filter-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+/* v0.0.24: only status text is red for low stock; stock numbers remain normal. */
+.inventory-status.inventory-low {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+td.inventory-low:not(.inventory-status) {
+  color: inherit !important;
+  font-weight: inherit !important;
+}
+
+
+/* v0.0.24: table layout containment and visible column separators */
+.main {
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+}
+
+.card,
+.card-body {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.table-scroll,
+.inventory-table-scroll,
+.vertical-scroll {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+.vertical-scroll {
+  max-height: 70vh !important;
+}
+
+/* Keep horizontal expansion inside the table scroll area, not the whole page. */
+.resizable-table {
+  width: max-content !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  table-layout: fixed !important;
+}
+
+.resizable-table th,
+.resizable-table td {
+  border-right: 1px solid #d1d5db !important;
+}
+
+.resizable-table th:last-child,
+.resizable-table td:last-child {
+  border-right: 0 !important;
+}
+
+.resizable-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  background: #f3f4f6 !important;
+}
+
+/* Keep list title visible while scrolling inside long tables. */
+.card:has(.resizable-table) > .card-header {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  background: #fff !important;
+}
+
+/* Purchase label actions under batch title */
+.label-actions-under-title {
+  margin: 0 0 12px 0 !important;
+  align-items: center;
+}
+
+/* v0.0.24: ensure low stock red only applies to status text */
+td.inventory-low:not(.inventory-status) {
+  color: inherit !important;
+  font-weight: inherit !important;
+}
+
+
+/* v0.0.24: list-card print/download buttons and table autofit refinement */
+.card-header.with-actions .actions.no-print {
+  margin-left: auto !important;
+  justify-content: flex-end !important;
+}
+
+.column-resizer {
+  border-right: 1px solid transparent;
+}
+
+.column-resizer:hover {
+  background: rgba(37, 99, 235, .18);
+  border-right-color: #2563eb;
+}
+
+.resizable-table th {
+  user-select: none;
+}
+
+.resizable-table th,
+.resizable-table td {
+  border-right: 1px solid #d1d5db !important;
+}
+
+.resizable-table th:last-child,
+.resizable-table td:last-child {
+  border-right: 0 !important;
+}
+
+@media print {
+  .table-scroll,
+  .vertical-scroll,
+  .inventory-table-scroll {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+
+/* v0.0.24: column visibility chooser */
+.column-chooser-menu {
+  position: fixed;
+  z-index: 100000;
+  width: 320px;
+  max-height: 520px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.25);
+  padding: 14px;
+}
+
+.column-chooser-menu .excel-filter-options {
+  max-height: 340px;
+}
+
+.card-header.with-actions .actions.no-print .btn-compact,
+.card-header.with-actions .actions.no-print button.btn-compact,
+.card-header.with-actions .actions.no-print a.btn-compact {
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  border-radius: 8px !important;
+}
+
+
+/* v0.0.24: preserve user-defined column widths across reloads */
+.resizable-table {
+  width: auto !important;
+  max-width: none !important;
+}
+
+.resizable-table th {
+  box-sizing: border-box !important;
+}
+
+/* v0.0.24: query buttons slightly lower */
+.search-form .actions,
+.form-actions-separated,
+.inventory-search-form .actions {
+  margin-top: 18px !important;
+  padding-top: 4px !important;
+}
+
+
+/* v0.0.24: query button row lower, with higher specificity than previous overrides */
+.card .card-body form.search-form > .actions,
+.card .card-body form.search-form > .actions.form-actions-separated,
+form.search-form > .actions.form-actions-separated,
+form.search-form > .actions.edit-form-actions {
+  margin-top: 30px !important;
+  padding-top: 8px !important;
+}
+
+/* v0.0.24: settings page */
+.settings-check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 14px 22px;
+  margin-top: 18px;
+}
+.settings-check-grid label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+.settings-check-grid input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}

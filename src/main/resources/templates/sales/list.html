@@ -12,57 +12,86 @@
         <div class="topbar">
             <div>
                 <h1>銷貨單列表</h1>
-                <div class="subtitle">可查看草稿與已確認銷貨單，草稿可繼續刷條碼加入明細。</div>
+                <div class="subtitle">可依銷貨單號、客戶代號、客戶名稱、狀態與日期查詢；搜尋後由列表選擇單據。</div>
             </div>
-            <div><a class="btn btn-primary" href="/sales/new">新增銷貨單</a></div>
+            <div class="actions"><a class="btn btn-primary" href="/sales/new">新增銷貨單</a></div>
+        </div>
+
+        <div class="card no-print">
+            <div class="card-header">查詢條件</div>
+            <div class="card-body">
+                <form method="get" action="/sales" class="search-form">
+                    <div class="grid grid-4">
+                        <div><label>關鍵字</label><input name="keyword" th:value="${keyword}" placeholder="銷貨單號 / 付款類型 / 狀態"></div>
+                        <div><label>客戶代號</label><input name="customerCode" data-lookup="customers" data-fill="code" th:value="${customerCode}" placeholder="客戶代號"></div>
+                        <div><label>客戶名稱</label><input name="customerName" data-lookup="customers" data-fill="name" th:value="${customerName}" placeholder="客戶名稱"></div>
+                        <div>
+                            <label>狀態</label>
+                            <select name="status">
+                                <option value="" th:selected="${status == null || status == ''}">全部</option>
+                                <option value="DRAFT" th:selected="${status == 'DRAFT'}">草稿</option>
+                                <option value="CONFIRMED" th:selected="${status == 'CONFIRMED'}">已確認</option>
+                                <option value="VOID" th:selected="${status == 'VOID'}">已作廢</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-4">
+                        <div><label>起始日期</label><input type="date" name="dateFrom" th:value="${dateFrom}"></div>
+                        <div><label>結束日期</label><input type="date" name="dateTo" th:value="${dateTo}"></div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-primary" type="submit">查詢</button>
+                        <a class="btn btn-outline" href="/sales">清除</a>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <div class="card">
-            <div class="card-header">銷貨單資料</div>
-            <div class="card-body">
+            <div class="card-header with-actions">
+                <span>銷貨單資料</span>
+                <div class="actions no-print">
+                    <button class="btn btn-outline btn-compact" type="button" onclick="openColumnChooser('salesListTable')">顯示欄位</button>
+                    <button class="btn btn-outline btn-compact" type="button" onclick="window.print()">列印</button>
+                    <button class="btn btn-primary btn-compact" type="button" onclick="downloadTableCsv('salesListTable', '銷貨單列表.csv')">下載</button>
+                </div>
+            </div>
+            <div class="card-body table-scroll vertical-scroll">
                 <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
                 <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
-                <table>
+                <table id="salesListTable" class="resizable-table" data-table-key="sales-list">
                     <thead>
                     <tr>
-                        <th>銷貨單號</th>
-                        <th>單據日期</th>
-                        <th>銷貨日期</th>
-                        <th>客戶</th>
-                        <th>狀態</th>
-                        <th>付款</th>
-                        <th>總數量</th>
-                        <th>總金額</th>
-                        <th>PDF</th>
-                        <th>操作</th>
+                        <th>銷貨單號</th><th>單據日期</th><th>銷貨日期</th><th>客戶代號</th><th>客戶名稱</th><th>狀態</th><th>付款類型</th><th>付款狀況</th><th>總數量</th><th>總金額</th><th>PDF</th><th>操作</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="order : ${orders}">
-                        <td th:text="${order.salesNo}"></td>
-                        <td th:text="${order.documentDate}"></td>
-                        <td th:text="${order.salesDate}"></td>
+                    <tr th:each="row : ${rows}">
+                        <td th:text="${row.order.salesNo}"></td>
+                        <td th:text="${row.order.documentDate}"></td>
+                        <td th:text="${row.order.salesDate}"></td>
+                        <td th:text="${row.customer != null ? row.customer.customerCode : ''}"></td>
+                        <td th:text="${row.customer != null ? row.customer.customerName : '未指定'}"></td>
+                        <td><span class="badge" th:classappend="${row.order.status == 'CONFIRMED'} ? ' badge-success' : (row.order.status == 'VOID' ? ' badge-danger' : ' badge-warning')" th:text="${row.order.status == 'CONFIRMED' ? '已確認' : (row.order.status == 'VOID' ? '已作廢' : '草稿')}"></span></td>
+                        <td th:text="${row.order.paymentType == 'CASH' ? '現金' : (row.order.paymentType == 'TRANSFER' ? '轉帳' : (row.order.paymentType == 'CREDIT' ? '欠款' : (row.order.paymentType ?: '-')))}"></td>
+                        <td th:text="${row.order.paymentStatus == 'PAID' ? '已付款' : (row.order.paymentStatus == 'UNPAID' ? '待付款' : (row.order.paymentStatus == 'PARTIAL' ? '部分付款' : (row.order.paymentStatus ?: '-')))}"></td>
+                        <td th:text="${row.order.totalQuantity}"></td>
+                        <td th:text="${row.order.totalAmount}"></td>
                         <td>
-                            <span th:each="c : ${customers}" th:if="${c.customerId == order.customerId}" th:text="${c.customerName}"></span>
-                            <span th:if="${order.customerId == null}">未指定</span>
+                            <a th:if="${row.order.pdfPath != null}" th:href="@{/local-file(path=${row.order.pdfPath})}" target="_blank">查看</a>
+                            <a th:if="${row.order.pdfPath != null}" th:href="@{/local-file/download(path=${row.order.pdfPath})}">下載</a>
+                            <span th:if="${row.order.pdfPath == null}">-</span>
                         </td>
-                        <td><span class="badge" th:classappend="${order.status == 'CONFIRMED'} ? ' badge-success' : (order.status == 'VOID' ? ' badge-danger' : ' badge-warning')" th:text="${order.status == 'CONFIRMED' ? '已確認' : (order.status == 'VOID' ? '已作廢' : '草稿')}"></span></td>
-                        <td th:text="${order.paymentType ?: '-'}"></td>
-                        <td th:text="${order.totalQuantity}"></td>
-                        <td th:text="${order.totalAmount}"></td>
-                        <td>
-                            <a th:if="${order.pdfPath != null}" th:href="@{/local-file(path=${order.pdfPath})}" target="_blank">查看</a>
-                            <a th:if="${order.pdfPath != null}" th:href="@{/local-file/download(path=${order.pdfPath})}">下載</a>
-                            <span th:if="${order.pdfPath == null}">-</span>
-                        </td>
-                        <td><a class="btn btn-outline" th:href="@{'/sales/' + ${order.salesId}}">查看</a> <a class="btn btn-primary" th:if="${order.status != 'VOID'}" th:href="@{'/sales/' + ${order.salesId} + '?edit=true'}">編輯</a></td>
+                        <td><div class="list-row-actions"><a class="btn btn-outline" th:href="@{'/sales/' + ${row.order.salesId}}">查看</a><a class="btn btn-primary" th:if="${row.order.status != 'VOID'}" th:href="@{'/sales/' + ${row.order.salesId} + '?edit=true'}">編輯</a></div></td>
                     </tr>
-                    <tr th:if="${#lists.isEmpty(orders)}"><td colspan="10">尚無銷貨單資料</td></tr>
+                    <tr th:if="${#lists.isEmpty(rows)}"><td colspan="12">無符合條件資料。</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 </div>
+<script src="/js/lookup-modal.js"></script>
+<script src="/js/table-tools.js"></script>
 </body>
 </html>

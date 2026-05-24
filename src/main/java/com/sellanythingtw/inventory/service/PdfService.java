@@ -9,6 +9,10 @@ import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.PdfPageEventHelper;
+import com.lowagie.text.pdf.PdfContentByte;
+import com.lowagie.text.pdf.PdfGState;
+import com.lowagie.text.pdf.ColumnText;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
@@ -16,12 +20,14 @@ import java.io.FileOutputStream;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
 public class PdfService {
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DATETIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final AppProperties appProperties;
 
     public PdfService(AppProperties appProperties) {
@@ -36,7 +42,8 @@ public class PdfService {
             FilesUtils.createFolder(path.getParent().toString());
 
             Document doc = new Document(PageSize.A4.rotate(), 28, 28, 24, 24);
-            PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+            PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+            if ("VOID".equals(order.getStatus())) writer.setPageEvent(new VoidWatermarkPageEvent());
             doc.open();
 
             Font title = font(22, Font.BOLD);
@@ -54,7 +61,7 @@ public class PdfService {
             titleCell.setBorder(Rectangle.NO_BORDER);
             titleCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
             titleTable.addCell(titleCell);
-            PdfPCell noCell = cleanCell(new Phrase("單號：" + nvl(order.getPurchaseNo()) + "\n狀態：" + statusText(order.getStatus()), subTitle));
+            PdfPCell noCell = cleanCell(new Phrase("單號：" + nvl(order.getPurchaseNo()) + "\n狀態：" + statusText(order.getStatus()) + "\n建立時間：" + formatDateTime(order.getCreatedAt()) + "\n更新時間：" + formatDateTime(order.getUpdatedAt()), subTitle));
             noCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             noCell.setBorder(Rectangle.NO_BORDER);
             titleTable.addCell(noCell);
@@ -71,6 +78,9 @@ public class PdfService {
             addInfo(info, "電話", supplier == null ? "" : supplier.getPhone(), header, normal, gray);
             addInfo(info, "聯絡人", supplier == null ? "" : supplier.getContactPerson(), header, normal, gray);
             addInfo(info, "地址", supplier == null ? "" : supplier.getAddress(), header, normal, gray, 5);
+            addInfo(info, "PDF 更新", formatDateTime(order.getPdfUpdatedAt()), header, normal, gray);
+            addInfo(info, "作廢時間", formatDateTime(order.getVoidedAt()), header, normal, gray);
+            addInfo(info, "恢復時間", formatDateTime(order.getRestoredAt()), header, normal, gray);
             info.setSpacingAfter(12);
             doc.add(info);
 
@@ -113,7 +123,7 @@ public class PdfService {
             bottom.addCell(totalWrap);
             doc.add(bottom);
 
-            doc.add(footer("本單據由 ERPManager 產生｜列印日期：" + format(LocalDate.now()), small));
+            doc.add(footer("本單據由 ERPManager 產生｜PDF 產生時間：" + formatDateTime(LocalDateTime.now()), small));
             doc.close();
             return path.toString();
         } catch (Exception ex) {
@@ -129,7 +139,8 @@ public class PdfService {
             FilesUtils.createFolder(path.getParent().toString());
 
             Document doc = new Document(PageSize.A4.rotate(), 28, 28, 24, 24);
-            PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+            PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+            if ("VOID".equals(order.getStatus())) writer.setPageEvent(new VoidWatermarkPageEvent());
             doc.open();
 
             Font title = font(22, Font.BOLD);
@@ -146,7 +157,7 @@ public class PdfService {
             PdfPCell titleCell = cleanCell(new Phrase("銷貨單", title));
             titleCell.setBorder(Rectangle.NO_BORDER);
             titleTable.addCell(titleCell);
-            PdfPCell noCell = cleanCell(new Phrase("單號：" + nvl(order.getSalesNo()) + "\n狀態：" + statusText(order.getStatus()), subTitle));
+            PdfPCell noCell = cleanCell(new Phrase("單號：" + nvl(order.getSalesNo()) + "\n狀態：" + statusText(order.getStatus()) + "\n建立時間：" + formatDateTime(order.getCreatedAt()) + "\n更新時間：" + formatDateTime(order.getUpdatedAt()), subTitle));
             noCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             noCell.setBorder(Rectangle.NO_BORDER);
             titleTable.addCell(noCell);
@@ -163,6 +174,9 @@ public class PdfService {
             addInfo(info, "電話", customer == null ? "" : customer.getPhone(), header, normal, gray);
             addInfo(info, "聯絡人", customer == null ? "" : customer.getContactPerson(), header, normal, gray);
             addInfo(info, "送貨地址", customer == null ? "" : customer.getShippingAddress(), header, normal, gray, 5);
+            addInfo(info, "PDF 更新", formatDateTime(order.getPdfUpdatedAt()), header, normal, gray);
+            addInfo(info, "作廢時間", formatDateTime(order.getVoidedAt()), header, normal, gray);
+            addInfo(info, "恢復時間", formatDateTime(order.getRestoredAt()), header, normal, gray);
             info.setSpacingAfter(12);
             doc.add(info);
 
@@ -204,7 +218,7 @@ public class PdfService {
             bottom.addCell(totalWrap);
             doc.add(bottom);
 
-            doc.add(footer("本單據由 ERPManager 產生｜列印日期：" + format(LocalDate.now()), small));
+            doc.add(footer("本單據由 ERPManager 產生｜PDF 產生時間：" + formatDateTime(LocalDateTime.now()), small));
             doc.close();
             return path.toString();
         } catch (Exception ex) {
@@ -285,6 +299,7 @@ public class PdfService {
     private String nvl(String value) { return value == null ? "" : value; }
     private String nvl(Object value) { return value == null ? "" : String.valueOf(value); }
     private String format(LocalDate value) { return value == null ? "" : value.format(DATE); }
+    private String formatDateTime(LocalDateTime value) { return value == null ? "" : value.format(DATETIME); }
     private String money(BigDecimal value) { return value == null ? "0" : value.stripTrailingZeros().toPlainString(); }
     private int safeInt(Integer value) { return value == null ? 0 : value; }
     private String statusText(String status) {
@@ -301,5 +316,28 @@ public class PdfService {
             sb.append(v.trim());
         }
         return sb.toString();
+    }
+
+    private class VoidWatermarkPageEvent extends PdfPageEventHelper {
+        @Override
+        public void onEndPage(PdfWriter writer, Document document) {
+            try {
+                PdfContentByte canvas = writer.getDirectContent();
+                PdfGState state = new PdfGState();
+                state.setFillOpacity(0.18f);
+                canvas.saveState();
+                canvas.setGState(state);
+                Font watermark = font(88, Font.BOLD);
+                watermark.setColor(new Color(220, 38, 38));
+                Rectangle page = document.getPageSize();
+                ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER,
+                        new Phrase("作廢", watermark),
+                        page.getWidth() / 2,
+                        page.getHeight() / 2,
+                        35);
+                canvas.restoreState();
+            } catch (Exception ignored) {
+            }
+        }
     }
 }

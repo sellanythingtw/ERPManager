@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>尚未使用完畢的進貨批次</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="app">
+    <div th:replace="~{fragments :: sidebar('inventory')}"></div>
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <h1>尚未使用完畢的進貨批次</h1>
+                <div class="subtitle" th:text="${product.productCode + '｜' + product.productName + '｜' + (product.productAlias ?: '')}"></div>
+            </div>
+            <div class="actions">
+                <a class="btn btn-outline" href="/inventory">回即時庫存</a>
+                <button class="btn btn-primary" onclick="window.print()">列印</button>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">進貨批次列表</div>
+            <div class="card-body table-scroll">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>進貨日期</th><th>條碼</th><th>品號</th><th>品名</th><th>小名</th><th>供應商代號</th><th>批發價</th><th>銷售價</th><th>進貨數量</th><th>已用數量</th><th>剩餘數量</th><th>狀態</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="row : ${rows}">
+                        <td th:text="${row.lot.purchaseDate}"></td>
+                        <td th:text="${row.lot.barcodeValue}"></td>
+                        <td th:text="${row.lot.productCode}"></td>
+                        <td th:text="${row.lot.productName}"></td>
+                        <td th:text="${row.lot.productAlias}"></td>
+                        <td th:text="${row.lot.supplierCode}"></td>
+                        <td th:text="${row.lot.wholesalePrice}"></td>
+                        <td th:text="${row.lot.salePrice}"></td>
+                        <td th:text="${row.lot.initialQuantity}"></td>
+                        <td th:text="${row.usedQuantity}"></td>
+                        <td th:text="${row.lot.remainingQuantity}"></td>
+                        <td th:text="${row.lot.status}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(rows)}"><td colspan="12">此產品目前沒有尚未使用完畢的進貨批次。</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

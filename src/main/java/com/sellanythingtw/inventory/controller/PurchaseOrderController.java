@@ -36,9 +36,52 @@ public class PurchaseOrderController {
     }
 
     @GetMapping("/purchases")
-    public String list(Model model) {
-        model.addAttribute("orders", purchaseOrderService.listAll());
-        model.addAttribute("suppliers", supplierRepository.findAll());
+    public String list(@RequestParam(required = false) String keyword,
+                       @RequestParam(required = false) String supplierCode,
+                       @RequestParam(required = false) String supplierName,
+                       @RequestParam(required = false) String status,
+                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+                       Model model) {
+        var suppliers = supplierRepository.findAll();
+        var orders = purchaseOrderService.listAll().stream().filter(order -> {
+            if (hasText(status) && !status.equals(order.getStatus())) return false;
+            if (dateFrom != null && order.getPurchaseDate() != null && order.getPurchaseDate().isBefore(dateFrom)) return false;
+            if (dateTo != null && order.getPurchaseDate() != null && order.getPurchaseDate().isAfter(dateTo)) return false;
+
+            String supplierText = suppliers.stream()
+                    .filter(s -> s.getSupplierId() != null && s.getSupplierId().equals(order.getSupplierId()))
+                    .map(s -> safe(s.getSupplierCode()) + " " + safe(s.getSupplierName()))
+                    .findFirst().orElse("");
+
+            String supplierCodeText = suppliers.stream()
+                    .filter(s -> s.getSupplierId() != null && s.getSupplierId().equals(order.getSupplierId()))
+                    .map(s -> safe(s.getSupplierCode()))
+                    .findFirst().orElse("");
+
+            String supplierNameText = suppliers.stream()
+                    .filter(s -> s.getSupplierId() != null && s.getSupplierId().equals(order.getSupplierId()))
+                    .map(s -> safe(s.getSupplierName()))
+                    .findFirst().orElse("");
+
+            if (hasText(supplierCode) && !supplierCodeText.contains(supplierCode.trim())) return false;
+            if (hasText(supplierName) && !supplierNameText.contains(supplierName.trim())) return false;
+
+            if (hasText(keyword)) {
+                String k = keyword.trim().toLowerCase();
+                String haystack = (safe(order.getPurchaseNo()) + " " + supplierText + " " + safe(order.getStatus())).toLowerCase();
+                if (!haystack.contains(k)) return false;
+            }
+            return true;
+        }).toList();
+        model.addAttribute("orders", orders);
+        model.addAttribute("suppliers", suppliers);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("supplierCode", supplierCode);
+        model.addAttribute("supplierName", supplierName);
+        model.addAttribute("status", status);
+        model.addAttribute("dateFrom", dateFrom);
+        model.addAttribute("dateTo", dateTo);
         return "purchase/list";
     }
 
@@ -76,12 +119,13 @@ public class PurchaseOrderController {
                                  @RequestParam(required = false) String sizeCode,
                                  @RequestParam(required = false) Integer quantity,
                                  @RequestParam(required = false) Long labelSettingId,
+                                 @RequestParam(required = false) String itemNote,
                                  @RequestParam(defaultValue = "draft") String action,
                                  RedirectAttributes redirectAttributes) {
         try {
             boolean confirm = "confirm".equals(action);
             Long id = purchaseOrderService.createWithFirstItem(supplierId, purchaseDate, taxEnabled, note,
-                    productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId, confirm).getPurchaseId();
+                    productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId, itemNote, confirm).getPurchaseId();
             redirectAttributes.addFlashAttribute("successMessage", confirm ? "進貨單已建立並確認。" : "進貨單草稿已建立。仍可點擊編輯繼續修改。");
             return "redirect:/purchases/" + id;
         } catch (Exception ex) {
@@ -118,6 +162,7 @@ public class PurchaseOrderController {
                                @RequestParam(required = false) List<String> sizeCode,
                                @RequestParam(required = false) List<Integer> quantity,
                                @RequestParam(required = false) List<Long> labelSettingId,
+                               @RequestParam(required = false) List<String> itemNote,
                                @RequestParam(required = false) Long newProductId,
                                @RequestParam(defaultValue = "0") BigDecimal newWholesalePrice,
                                @RequestParam(defaultValue = "0") BigDecimal newSalePrice,
@@ -125,11 +170,12 @@ public class PurchaseOrderController {
                                @RequestParam(required = false) String newSizeCode,
                                @RequestParam(required = false) Integer newQuantity,
                                @RequestParam(required = false) Long newLabelSettingId,
+                               @RequestParam(required = false) String newItemNote,
                                RedirectAttributes redirectAttributes) {
         try {
             purchaseOrderService.saveFullForm(purchaseId, supplierId, purchaseDate, taxEnabled, note,
-                    itemId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId,
-                    newProductId, newWholesalePrice, newSalePrice, newTrayQuantityCode, newSizeCode, newQuantity, newLabelSettingId);
+                    itemId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId, itemNote,
+                    newProductId, newWholesalePrice, newSalePrice, newTrayQuantityCode, newSizeCode, newQuantity, newLabelSettingId, newItemNote);
             redirectAttributes.addFlashAttribute("successMessage", "進貨單已儲存。若為已確認單據，PDF 與進貨貼紙已自動更新。");
             return "redirect:/purchases/" + purchaseId;
         } catch (Exception ex) {
@@ -163,9 +209,10 @@ public class PurchaseOrderController {
                               @RequestParam(required = false) String sizeCode,
                               @RequestParam Integer quantity,
                               @RequestParam(required = false) Long labelSettingId,
+                              @RequestParam(required = false) String itemNote,
                               RedirectAttributes redirectAttributes) {
         try {
-            purchaseOrderService.addItem(purchaseId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId);
+            purchaseOrderService.addItem(purchaseId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId, itemNote);
             redirectAttributes.addFlashAttribute("successMessage", "進貨明細已儲存至草稿。");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
@@ -183,9 +230,10 @@ public class PurchaseOrderController {
                                  @RequestParam(required = false) String sizeCode,
                                  @RequestParam Integer quantity,
                                  @RequestParam(required = false) Long labelSettingId,
+                                 @RequestParam(required = false) String itemNote,
                                  RedirectAttributes redirectAttributes) {
         try {
-            purchaseOrderService.updateItem(purchaseId, itemId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId);
+            purchaseOrderService.updateItem(purchaseId, itemId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId, itemNote);
             redirectAttributes.addFlashAttribute("successMessage", "進貨明細已更新。若為已確認單據，已同步批次、庫存入庫紀錄並重新產生 PDF 與貼紙。");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
@@ -278,8 +326,9 @@ public class PurchaseOrderController {
                                        @RequestParam(required = false) String trayQuantityCode,
                                        @RequestParam(required = false) String sizeCode,
                                        @RequestParam Integer quantity,
-                                       @RequestParam(required = false) Long labelSettingId) {
-        return ApiResult.ok("進貨明細已加入", "data", purchaseOrderService.addItem(purchaseId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId));
+                                       @RequestParam(required = false) Long labelSettingId,
+                                           @RequestParam(required = false) String itemNote) {
+        return ApiResult.ok("進貨明細已加入", "data", purchaseOrderService.addItem(purchaseId, productId, wholesalePrice, salePrice, trayQuantityCode, sizeCode, quantity, labelSettingId, itemNote));
     }
 
     @PostMapping("/api/purchases/{purchaseId}/confirm")
@@ -306,5 +355,13 @@ public class PurchaseOrderController {
 
     private String redirectLocalFile(String path) {
         return "redirect:/local-file?path=" + UriUtils.encodeQueryParam(path, StandardCharsets.UTF_8);
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
     }
 }
