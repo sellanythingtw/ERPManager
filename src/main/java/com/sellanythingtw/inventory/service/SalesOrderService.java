@@ -26,6 +26,7 @@ public class SalesOrderService {
     private final NumberSequenceService sequenceService;
     private final PdfService pdfService;
     private final CloudSyncService cloudSyncService;
+    private final PaymentRecordRepository paymentRecordRepository;
 
     public SalesOrderService(SalesOrderRepository salesOrderRepository,
                              SalesOrderItemRepository itemRepository,
@@ -34,7 +35,8 @@ public class SalesOrderService {
                              StockMovementRepository movementRepository,
                              NumberSequenceService sequenceService,
                              PdfService pdfService,
-                             CloudSyncService cloudSyncService) {
+                             CloudSyncService cloudSyncService,
+                             PaymentRecordRepository paymentRecordRepository) {
         this.salesOrderRepository = salesOrderRepository;
         this.itemRepository = itemRepository;
         this.lotRepository = lotRepository;
@@ -43,6 +45,7 @@ public class SalesOrderService {
         this.sequenceService = sequenceService;
         this.pdfService = pdfService;
         this.cloudSyncService = cloudSyncService;
+        this.paymentRecordRepository = paymentRecordRepository;
     }
 
     public SalesOrder createDraft(Long customerId, LocalDate salesDate) {
@@ -81,6 +84,9 @@ public class SalesOrderService {
         if (customerId == null) throw new IllegalArgumentException("客戶為必填，請雙擊查詢並選擇客戶");
         SalesOrder order = getOrder(salesId);
         if ("VOID".equals(order.getStatus())) throw new IllegalStateException("已作廢銷貨單不可修改");
+        if ("CONFIRMED".equals(order.getStatus()) && hasPaymentRecords(salesId)) {
+            throw new IllegalStateException("此銷貨單已有收款紀錄，請先到沖帳管理刪除或調整收款紀錄後再編輯。");
+        }
         order.setCustomerId(customerId);
         if (salesDate != null) order.setSalesDate(salesDate);
         order = salesOrderRepository.save(order);
@@ -161,6 +167,19 @@ public class SalesOrderService {
                 .orElseThrow(() -> new IllegalArgumentException("找不到銷貨單"));
     }
 
+
+    public boolean hasPaymentRecords(Long salesId) {
+        return !paymentRecordRepository.findBySalesIdOrderByPaymentDateDesc(salesId).isEmpty();
+    }
+
+    public boolean canReturnToDraft(Long salesId) {
+        SalesOrder order = getOrder(salesId);
+        BigDecimal paid = order.getPaidAmount() == null ? BigDecimal.ZERO : order.getPaidAmount();
+        return "CONFIRMED".equals(order.getStatus())
+                && paid.compareTo(BigDecimal.ZERO) <= 0
+                && !hasPaymentRecords(salesId);
+    }
+
     public List<SalesOrderItem> listItems(Long salesId) {
         return itemRepository.findBySalesIdOrderBySortOrderAsc(salesId);
     }
@@ -169,6 +188,8 @@ public class SalesOrderService {
         Map<String, Object> result = new LinkedHashMap<>();
         SalesOrder order = getOrder(salesId);
         result.put("order", order);
+        result.put("hasPaymentRecords", hasPaymentRecords(salesId));
+        result.put("canReturnToDraft", canReturnToDraft(salesId));
         result.put("items", listItems(salesId));
         customerRepository.findById(order.getCustomerId() == null ? -1L : order.getCustomerId())
                 .ifPresent(customer -> result.put("customer", customer));
@@ -257,6 +278,38 @@ public class SalesOrderService {
         order.setTaxAmount(tax);
         order.setTotalAmount(subtotal.add(tax));
         order.setTotalQuantity(totalQuantity);
+    }
+
+
+    @Transactional
+    public SalesOrder returnToDraft(Long salesId) {
+        SalesOrder order = getOrder(salesId);
+        if (!"CONFIRMED".equals(order.getStatus())) throw new IllegalStateException("只有已確認銷貨單可以退回編輯");
+        if (hasPaymentRecords(salesId) || (order.getPaidAmount() != null && order.getPaidAmount().compareTo(BigDecimal.ZERO) > 0)) {
+            throw new IllegalStateException("此銷貨單已有收款紀錄，請先至沖帳管理刪除或調整收款後再退回編輯。");
+        }
+
+        List<SalesOrderItem> items = itemRepository.findBySalesIdOrderBySortOrderAsc(salesId);
+        for (SalesOrderItem item : items) {
+            if (item.getLotId() != null) {
+                PurchaseLot lot = lotRepository.findById(item.getLotId()).orElse(null);
+                if (lot != null) {
+                    int qty = item.getQuantity() == null ? 0 : item.getQuantity();
+                    lot.setRemainingQuantity((lot.getRemainingQuantity() == null ? 0 : lot.getRemainingQuantity()) + qty);
+                    if (lot.getRemainingQuantity() > 0) lot.setStatus("ACTIVE");
+                    lotRepository.save(lot);
+                }
+            }
+            movementRepository.findFirstBySourceTypeAndSourceIdAndLotIdAndMovementType("SALES", salesId, item.getLotId(), "SALES_OUT")
+                    .ifPresent(movementRepository::delete);
+        }
+
+        order.setStatus("DRAFT");
+        order.setPaidAmount(BigDecimal.ZERO);
+        order.setUnpaidAmount(order.getTotalAmount() == null ? BigDecimal.ZERO : order.getTotalAmount());
+        order.setPaymentStatus("UNPAID");
+        order = salesOrderRepository.save(order);
+        return order;
     }
 
     @Transactional

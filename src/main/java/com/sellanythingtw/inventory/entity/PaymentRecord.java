@@ -13,6 +13,7 @@ public class PaymentRecord {
     private Long salesId;
     private String salesNo;
     private Long customerId;
+    private String receiptNo;
     private LocalDate paymentDate;
     private String paymentMethod;
     private BigDecimal amount = BigDecimal.ZERO;
@@ -30,6 +31,8 @@ public class PaymentRecord {
     public void setSalesNo(String salesNo) { this.salesNo = salesNo; }
     public Long getCustomerId() { return customerId; }
     public void setCustomerId(Long customerId) { this.customerId = customerId; }
+    public String getReceiptNo() { return receiptNo; }
+    public void setReceiptNo(String receiptNo) { this.receiptNo = receiptNo; }
     public LocalDate getPaymentDate() { return paymentDate; }
     public void setPaymentDate(LocalDate paymentDate) { this.paymentDate = paymentDate; }
     public String getPaymentMethod() { return paymentMethod; }

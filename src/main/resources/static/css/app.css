@@ -329,7 +329,7 @@ input.readonly-field {
 }
 
 
-/* v0.0.24 spacing corrections */
+/* v0.0.30 spacing corrections */
 .search-form .grid + .grid {
   margin-top: 18px !important;
 }
@@ -359,7 +359,7 @@ input.readonly-field {
 }
 
 
-/* v0.0.24: topbar buttons use the same compact size as general action buttons */
+/* v0.0.30: topbar buttons use the same compact size as general action buttons */
 .topbar .actions,
 .purchase-top-actions {
   display: flex !important;
@@ -414,7 +414,7 @@ input.readonly-field {
 }
 
 
-/* v0.0.24: compact PDF buttons in purchase detail view */
+/* v0.0.30: compact PDF buttons in purchase detail view */
 .btn-compact {
   width: auto !important;
   min-width: 0 !important;
@@ -431,7 +431,7 @@ input.readonly-field {
 }
 
 
-/* v0.0.24: search actions slightly closer to input rows */
+/* v0.0.30: search actions slightly closer to input rows */
 .search-form .actions {
   margin-top: 18px !important;
   padding-top: 2px !important;
@@ -442,7 +442,7 @@ input.readonly-field {
   padding-top: 4px !important;
 }
 
-/* v0.0.24: document edit/new sections should read as white continuous form areas */
+/* v0.0.30: document edit/new sections should read as white continuous form areas */
 .doc-section-card {
   background: #fff !important;
   box-shadow: none !important;
@@ -467,7 +467,7 @@ input.readonly-field {
 }
 
 
-/* v0.0.24: search buttons slightly higher and consistent query controls */
+/* v0.0.30: search buttons slightly higher and consistent query controls */
 .search-form .actions,
 .form-actions-separated {
   margin-top: 10px !important;
@@ -513,7 +513,7 @@ input[type="date"] {
 }
 
 
-/* v0.0.24 final layout overrides */
+/* v0.0.30 final layout overrides */
 .search-form .actions,
 .form-actions-separated,
 .inventory-search-form .actions {
@@ -583,13 +583,13 @@ input[type="date"]::-webkit-datetime-edit-text {
 }
 
 
-/* v0.0.24: larger gap between master-data edit fields and save/cancel buttons */
+/* v0.0.30: larger gap between master-data edit fields and save/cancel buttons */
 .edit-form-actions {
   margin-top: 32px !important;
   padding-top: 0 !important;
 }
 
-/* v0.0.24: master list row action spacing */
+/* v0.0.30: master list row action spacing */
 .list-row-actions {
   display: inline-flex !important;
   align-items: center !important;
@@ -598,7 +598,7 @@ input[type="date"]::-webkit-datetime-edit-text {
 }
 
 
-/* v0.0.24: master-data view topbar and inventory Excel-like controls */
+/* v0.0.30: master-data view topbar and inventory Excel-like controls */
 .excel-filter-bar {
   display: flex;
   gap: 14px;
@@ -631,7 +631,7 @@ input[type="date"]::-webkit-datetime-edit-text {
 }
 
 
-/* v0.0.24: master view topbar wrapper and inventory column filter */
+/* v0.0.30: master view topbar wrapper and inventory column filter */
 .topbar-action-wrap {
   margin-left: auto !important;
   display: flex !important;
@@ -729,7 +729,7 @@ input[type="date"]::-webkit-datetime-edit-text {
 }
 
 
-/* v0.0.24: force hidden master-data topbar actions to stay hidden despite previous !important .topbar .actions rules */
+/* v0.0.30: force hidden master-data topbar actions to stay hidden despite previous !important .topbar .actions rules */
 [hidden] {
   display: none !important;
 }
@@ -746,7 +746,7 @@ input[type="date"]::-webkit-datetime-edit-text {
 }
 
 
-/* v0.0.24: master-data topbar actions are mode-specific.
+/* v0.0.30: master-data topbar actions are mode-specific.
    viewTopActions is created dynamically only in 查看 mode; guard against display overrides. */
 #viewTopActions[hidden],
 #viewTopActions.is-hidden,
@@ -755,7 +755,7 @@ input[type="date"]::-webkit-datetime-edit-text {
 }
 
 
-/* v0.0.24: resizable/persistent tables and Excel-like column filters */
+/* v0.0.30: resizable/persistent tables and Excel-like column filters */
 .table-scroll,
 .inventory-table-scroll,
 .vertical-scroll {
@@ -905,7 +905,7 @@ body.resizing-column {
   margin-top: 12px;
 }
 
-/* v0.0.24: only status text is red for low stock; stock numbers remain normal. */
+/* v0.0.30: only status text is red for low stock; stock numbers remain normal. */
 .inventory-status.inventory-low {
   color: #dc2626;
   font-weight: 800;
@@ -917,7 +917,7 @@ td.inventory-low:not(.inventory-status) {
 }
 
 
-/* v0.0.24: table layout containment and visible column separators */
+/* v0.0.30: table layout containment and visible column separators */
 .main {
   min-width: 0 !important;
   overflow-x: hidden !important;
@@ -983,14 +983,14 @@ td.inventory-low:not(.inventory-status) {
   align-items: center;
 }
 
-/* v0.0.24: ensure low stock red only applies to status text */
+/* v0.0.30: ensure low stock red only applies to status text */
 td.inventory-low:not(.inventory-status) {
   color: inherit !important;
   font-weight: inherit !important;
 }
 
 
-/* v0.0.24: list-card print/download buttons and table autofit refinement */
+/* v0.0.30: list-card print/download buttons and table autofit refinement */
 .card-header.with-actions .actions.no-print {
   margin-left: auto !important;
   justify-content: flex-end !important;
@@ -1029,7 +1029,7 @@ td.inventory-low:not(.inventory-status) {
 }
 
 
-/* v0.0.24: column visibility chooser */
+/* v0.0.30: column visibility chooser */
 .column-chooser-menu {
   position: fixed;
   z-index: 100000;
@@ -1061,7 +1061,7 @@ td.inventory-low:not(.inventory-status) {
 }
 
 
-/* v0.0.24: preserve user-defined column widths across reloads */
+/* v0.0.30: preserve user-defined column widths across reloads */
 .resizable-table {
   width: auto !important;
   max-width: none !important;
@@ -1071,7 +1071,7 @@ td.inventory-low:not(.inventory-status) {
   box-sizing: border-box !important;
 }
 
-/* v0.0.24: query buttons slightly lower */
+/* v0.0.30: query buttons slightly lower */
 .search-form .actions,
 .form-actions-separated,
 .inventory-search-form .actions {
@@ -1080,7 +1080,7 @@ td.inventory-low:not(.inventory-status) {
 }
 
 
-/* v0.0.24: query button row lower, with higher specificity than previous overrides */
+/* v0.0.30: query button row lower, with higher specificity than previous overrides */
 .card .card-body form.search-form > .actions,
 .card .card-body form.search-form > .actions.form-actions-separated,
 form.search-form > .actions.form-actions-separated,
@@ -1089,7 +1089,7 @@ form.search-form > .actions.edit-form-actions {
   padding-top: 8px !important;
 }
 
-/* v0.0.24: settings page */
+/* v0.0.30: settings page */
 .settings-check-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(240px, 1fr));
@@ -1105,4 +1105,181 @@ form.search-form > .actions.edit-form-actions {
 .settings-check-grid input[type="checkbox"] {
   width: 18px;
   height: 18px;
+}
+
+
+/* v0.0.30: settings page layout and Google Drive form spacing */
+.settings-google-form .grid {
+  margin-top: 18px !important;
+}
+
+.settings-section-gap {
+  margin-top: 20px !important;
+}
+
+.settings-actions-compact,
+.settings-google-form > .settings-actions-compact {
+  margin-top: 14px !important;
+  padding-top: 0 !important;
+}
+
+/* v0.0.30: query action buttons lower than input fields */
+.card .card-body form.search-form > .actions:not(.settings-actions-compact),
+.card .card-body form.search-form > .actions.form-actions-separated:not(.settings-actions-compact),
+form.search-form > .actions.form-actions-separated:not(.settings-actions-compact),
+form.search-form > .actions.edit-form-actions:not(.settings-actions-compact) {
+  margin-top: 34px !important;
+  padding-top: 10px !important;
+}
+
+/* v0.0.30: fixed operation columns should not display resize handle */
+.fixed-width-th {
+  position: relative;
+}
+
+.fixed-width-th .column-resizer,
+th[data-no-resize="true"] .column-resizer {
+  display: none !important;
+}
+
+.resizable-table th[data-no-resize="true"],
+.resizable-table td.operation-cell {
+  width: 150px !important;
+  min-width: 132px !important;
+  max-width: 190px !important;
+}
+
+
+/* v0.0.30: payment receive page layout */
+.receive-entry-card {
+  margin-top: 28px !important;
+}
+
+.section-subtitle {
+  margin: 0 0 14px 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.receive-items-title {
+  margin-top: 28px;
+}
+
+.payment-submit-actions {
+  margin-top: 26px !important;
+  margin-bottom: 10px !important;
+  padding-top: 0 !important;
+}
+
+.payment-submit-actions + .card,
+.page-bottom-actions + .card {
+  margin-top: 34px !important;
+}
+
+
+/* v0.0.30: payment records as editable blocks */
+.payment-records-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.payment-record-card {
+  border-left: 5px solid #2563eb !important;
+}
+
+.payment-record-items {
+  margin-top: 18px;
+}
+
+.payment-record-edit-form .grid {
+  margin-bottom: 14px;
+}
+
+.receive-entry-card {
+  border-left: 5px solid #16a34a !important;
+}
+
+
+/* v0.0.30: payment receive refinements */
+.payment-records-stack + form .receive-entry-card,
+.receive-entry-card {
+  margin-top: 14px !important;
+}
+
+.payment-record-card .actions form {
+  display: inline-flex;
+  margin: 0;
+}
+
+
+/* v0.0.30 dashboard */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.dashboard-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-label {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.dashboard-value {
+  font-size: 30px;
+  font-weight: 900;
+  color: #111827;
+}
+
+.dashboard-value.danger {
+  color: #dc2626;
+}
+
+.dashboard-panels {
+  align-items: start;
+}
+
+.dashboard-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-list a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #1f2937;
+}
+
+.dashboard-list strong {
+  color: #2563eb;
+}
+
+.dashboard-actions {
+  display: grid;
+  gap: 10px;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
 }

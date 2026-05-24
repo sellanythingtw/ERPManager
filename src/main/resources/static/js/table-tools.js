@@ -13,6 +13,20 @@
     return table.dataset.tableKey || table.id || location.pathname.replace(/[^\w-]+/g, '_');
   }
 
+  function headerLabel(th){
+    return Array.from(th.childNodes)
+      .filter(n => n.nodeType === Node.TEXT_NODE)
+      .map(n => n.textContent)
+      .join('')
+      .replace(/[▾×↑↓]/g, '')
+      .trim() || th.innerText.replace(/[▾×↑↓]/g, '').trim();
+  }
+
+  function isFixedWidthColumn(th){
+    const label = headerLabel(th);
+    return th.dataset.noResize === 'true' || label === '操作';
+  }
+
   function measureColumnWidth(table, idx){
     const th = table.querySelectorAll('thead th')[idx];
     const sample = [th].concat(rows(table).map(tr => tr.children[idx]).filter(Boolean));
@@ -39,6 +53,8 @@
       max = Math.max(max, Math.ceil(measurer.getBoundingClientRect().width) + 36);
     });
     measurer.remove();
+    const label = th ? headerLabel(th) : "";
+    if (label === "操作") return Math.min(Math.max(max + 26, 132), 190);
     return Math.min(Math.max(max, 80), 420);
   }
 
@@ -127,9 +143,15 @@
     const saved = loadWidths(table);
 
     ths.forEach((th, idx) => {
-      th.classList.add('resizable-th');
-      const initial = saved && saved[idx] ? saved[idx] : measureColumnWidth(table, idx);
+      const fixed = isFixedWidthColumn(th);
+      th.classList.add(fixed ? 'fixed-width-th' : 'resizable-th');
+      const initial = fixed ? measureColumnWidth(table, idx) : (saved && saved[idx] ? saved[idx] : measureColumnWidth(table, idx));
       setColumnWidth(table, idx, initial);
+
+      if (fixed) {
+        th.dataset.noResize = 'true';
+        return;
+      }
 
       const grip = document.createElement('span');
       grip.className = 'column-resizer no-print';

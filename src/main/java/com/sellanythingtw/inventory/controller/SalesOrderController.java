@@ -49,8 +49,17 @@ public class SalesOrderController {
     }
 
     @GetMapping("/sales/{salesId}")
-    public String detail(@PathVariable Long salesId, @RequestParam(defaultValue = "false") boolean edit, Model model) {
-        model.addAllAttributes(salesOrderService.getDetail(salesId));
+    public String detail(@PathVariable Long salesId, @RequestParam(defaultValue = "false") boolean edit, Model model, RedirectAttributes redirectAttributes) {
+        Map<String, Object> detail = salesOrderService.getDetail(salesId);
+        if (edit) {
+            Object orderObj = detail.get("order");
+            boolean hasPaymentRecords = Boolean.TRUE.equals(detail.get("hasPaymentRecords"));
+            if (hasPaymentRecords) {
+                redirectAttributes.addFlashAttribute("errorMessage", "此銷貨單已有收款紀錄，請先至沖帳管理調整或刪除收款紀錄後，再編輯銷貨單。");
+                return "redirect:/sales/" + salesId;
+            }
+        }
+        model.addAllAttributes(detail);
         model.addAttribute("customers", customerRepository.findAll());
         model.addAttribute("editMode", edit);
         return "sales/detail";
@@ -157,6 +166,19 @@ public class SalesOrderController {
             salesOrderService.deleteDraft(salesId);
             redirectAttributes.addFlashAttribute("successMessage", "銷貨草稿已刪除。");
             return "redirect:/sales";
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/sales/" + salesId;
+        }
+    }
+
+
+    @PostMapping("/sales/{salesId}/return-to-draft")
+    public String returnToDraft(@PathVariable Long salesId, RedirectAttributes redirectAttributes) {
+        try {
+            salesOrderService.returnToDraft(salesId);
+            redirectAttributes.addFlashAttribute("successMessage", "銷貨單已退回編輯，庫存已回補，請修正後重新確認銷貨。");
+            return "redirect:/sales/" + salesId + "?edit=true";
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/sales/" + salesId;

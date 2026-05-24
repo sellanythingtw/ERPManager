@@ -1,12 +1,67 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><title>ERPManager</title><link rel="stylesheet" href="/css/app.css"></head>
-<body><div class="app">
-<div th:replace="~{fragments :: sidebar('home')}"></div>
-<main class="main">
-  <div class="topbar"><div><h1>ERPManager 本地端進銷存系統</h1><div class="subtitle">Java Spring Boot + SQLite，正式資料儲存在本地。</div></div></div>
-  <div class="card"><div class="card-header">目前開發版本 v0.0.24</div><div class="card-body">
-    <p>已包含產品、客戶、供應商、進貨批次、條碼、銷貨扣庫、沖帳查詢、貼紙設定與 PDF 產生的主流程。</p>
-    <p><a class="btn btn-primary" href="/products">產品管理</a> <a class="btn btn-outline" href="/purchases/new">進貨單</a> <a class="btn btn-outline" href="/sales/new">銷貨單</a></p>
-  </div></div>
-</main></div></body></html>
+<head>
+    <meta charset="UTF-8">
+    <title>ERPManager 首頁</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="app">
+    <div th:replace="~{fragments :: sidebar('home')}"></div>
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <h1>首頁</h1>
+                <div class="subtitle">ERPManager 工作台：今日摘要、待處理事項與快速操作。</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <div class="dashboard-label">今日進貨單</div>
+                <div class="dashboard-value" th:text="${summary.todayPurchases}">0</div>
+            </div>
+            <div class="dashboard-card">
+                <div class="dashboard-label">今日銷貨單</div>
+                <div class="dashboard-value" th:text="${summary.todaySales}">0</div>
+            </div>
+            <div class="dashboard-card">
+                <div class="dashboard-label">今日已收款</div>
+                <div class="dashboard-value" th:text="${summary.todayReceived}">0</div>
+            </div>
+            <div class="dashboard-card">
+                <div class="dashboard-label">未收款總額</div>
+                <div class="dashboard-value danger" th:text="${summary.totalReceivable}">0</div>
+            </div>
+        </div>
+
+        <div class="grid grid-3 dashboard-panels">
+            <div class="card">
+                <div class="card-header">待處理事項</div>
+                <div class="card-body dashboard-list">
+                    <a href="/sales?status=DRAFT"><span>草稿銷貨單</span><strong th:text="${summary.draftSales}">0</strong></a>
+                    <a href="/payments/receivables?paymentStatus=DEBT"><span>未收款銷貨單</span><strong th:text="${summary.unpaidSales}">0</strong></a>
+                    <a href="/inventory"><span>庫存水位低品項</span><strong th:text="${summary.lowStock}">0</strong></a>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">快速操作</div>
+                <div class="card-body dashboard-actions">
+                    <a class="btn btn-primary" href="/purchases/new">新增進貨單</a>
+                    <a class="btn btn-primary" href="/sales/new">新增銷貨單</a>
+                    <a class="btn btn-outline" href="/inventory">即時庫存</a>
+                    <a class="btn btn-outline" href="/payments/receivables">沖帳管理</a>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">系統資訊</div>
+                <div class="card-body dashboard-list">
+                    <a href="/products"><span>產品數</span><strong th:text="${summary.productCount}">0</strong></a>
+                    <a href="/settings"><span>備份 / Google Drive</span><strong>設定</strong></a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

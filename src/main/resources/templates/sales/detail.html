@@ -16,7 +16,8 @@
             </div>
             <div class="actions purchase-top-actions">
                 <a class="btn btn-outline" th:if="${!editMode}" href="/sales">返回列表</a>
-                <a class="btn btn-primary" th:if="${!editMode and order.status != 'VOID'}" th:href="@{'/sales/' + ${order.salesId} + '?edit=true'}">編輯單據</a>
+                <a class="btn btn-primary" th:if="${!editMode and order.status != 'VOID' and !hasPaymentRecords}" th:href="@{'/sales/' + ${order.salesId} + '?edit=true'}">編輯單據</a>
+                <a class="btn btn-outline" th:if="${!editMode and hasPaymentRecords}" th:href="@{'/payments/receivables/' + ${order.salesId}}">前往沖帳管理</a>
                 <a class="btn btn-outline" th:if="${editMode}" th:href="@{'/sales/' + ${order.salesId}}">取消編輯</a>
             </div>
         </div>
@@ -26,6 +27,7 @@
                 <span>單據資訊</span>
                 <div class="actions title-actions">
                     <form method="post" th:if="${order.status == 'DRAFT' and editMode}" th:action="@{'/sales/' + ${order.salesId} + '/delete-draft'}" onsubmit="return confirm('確定刪除此草稿？此動作無法復原。')"><button class="btn btn-danger" type="submit">刪除草稿</button></form>
+                    <form method="post" th:if="${canReturnToDraft}" th:action="@{'/sales/' + ${order.salesId} + '/return-to-draft'}" onsubmit="return confirm('確定退回編輯？系統會回補庫存，需修正後重新確認銷貨。')"><button class="btn btn-outline" type="submit">退回編輯</button></form>
                     <form method="post" th:if="${order.status == 'CONFIRMED'}" th:action="@{'/sales/' + ${order.salesId} + '/void'}" onsubmit="return confirm('確定作廢此銷貨單？作廢後仍可恢復。')"><button class="btn btn-danger" type="submit">作廢</button></form>
                     <form method="post" th:if="${order.status == 'VOID'}" th:action="@{'/sales/' + ${order.salesId} + '/restore'}" onsubmit="return confirm('確定恢復此銷貨單？')"><button class="btn btn-primary" type="submit">恢復</button></form>
                 </div>
@@ -59,6 +61,10 @@
 
         <div class="alert alert-info" th:if="${successMessage}" th:text="${successMessage}"></div>
         <div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+        <div class="alert alert-error" th:if="${hasPaymentRecords}">
+            此銷貨單已有收款紀錄，銷貨內容已鎖定。若需修改銷貨品項、數量、金額或客戶，請先至沖帳管理刪除或調整收款紀錄。
+            <a class="btn btn-outline btn-compact" th:href="@{'/payments/receivables/' + ${order.salesId}}">前往沖帳管理</a>
+        </div>
 
         <div class="card doc-section-card" th:if="${order.status == 'DRAFT' and editMode}">
             <div class="card-header">條碼掃描輸入</div>

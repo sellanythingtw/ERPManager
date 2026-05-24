@@ -78,6 +78,7 @@
                         <th>付款類型</th>
                         <th>狀態</th>
                         <th>最近收款</th>
+                        <th class="no-print" data-no-resize="true">操作</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -95,8 +96,11 @@
                                   th:text="${row.order.unpaidAmount == null || row.order.unpaidAmount <= 0 ? '付清' : '欠款'}"></span>
                         </td>
                         <td th:text="${row.lastPaymentDate}"></td>
+                        <td class="no-print">
+                            <a class="btn btn-primary btn-compact" th:href="@{'/payments/receivables/' + ${row.order.salesId}}">沖帳</a>
+                        </td>
                     </tr>
-                    <tr th:if="${#lists.isEmpty(rows)}"><td colspan="10">無符合條件資料</td></tr>
+                    <tr th:if="${#lists.isEmpty(rows)}"><td colspan="11">無符合條件資料</td></tr>
                     </tbody>
                 </table>
             </div>

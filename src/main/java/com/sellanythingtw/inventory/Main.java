@@ -19,7 +19,7 @@ import java.net.ServerSocket;
 @EnableConfigurationProperties(AppProperties.class)
 public class Main {
 
-    private static final String VERSION = "0.0.24";
+    private static final String VERSION = "0.0.30";
     private static final String HOST = "127.0.0.1";
     private static final int DEFAULT_PORT = 18780;
     private static final int MAX_PORT = 18799;

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>沖帳明細</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="app">
+    <div th:replace="~{fragments :: sidebar('payment')}"></div>
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <h1>沖帳明細</h1>
+                <div class="subtitle">每一次收款會形成獨立區塊，可查看與修正該次收款品項、數量與金額；最下方繼續處理剩餘未收款。</div>
+            </div>
+            <div class="actions">
+                <a class="btn btn-outline" href="/payments/receivables">返回列表</a>
+            </div>
+        </div>
+
+        <div class="alert alert-info" th:if="${param.received}">收款紀錄已新增。</div>
+        <div class="alert alert-info" th:if="${param.updated}">收款紀錄已更新。</div>
+        <div class="alert alert-info" th:if="${param.deleted}">收款紀錄已刪除。</div>
+
+        <div class="card">
+            <div class="card-header">客戶 / 單據資訊</div>
+            <div class="card-body">
+                <div class="grid grid-4">
+                    <div><label>銷貨單號</label><input readonly th:value="${order.salesNo}"></div>
+                    <div><label>銷貨日期</label><input readonly th:value="${order.salesDate}"></div>
+                    <div><label>客戶代號</label><input readonly th:value="${customer != null ? customer.customerCode : ''}"></div>
+                    <div><label>客戶名稱</label><input readonly th:value="${customer != null ? customer.customerName : '未指定'}"></div>
+                    <div><label>總金額</label><input readonly th:value="${order.totalAmount}"></div>
+                    <div><label>已收金額</label><input readonly th:value="${order.paidAmount}"></div>
+                    <div><label>未收金額</label><input readonly th:value="${order.unpaidAmount}"></div>
+                    <div><label>狀態</label><input readonly th:value="${order.unpaidAmount == null || order.unpaidAmount <= 0 ? '付清' : '欠款'}"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="payment-records-stack">
+            <div class="card payment-record-card" th:each="block, stat : ${recordBlocks}" th:with="record=${block.record}">
+                <div class="card-header with-actions">
+                    <span th:text="'第 ' + ${stat.index + 1} + ' 次收款｜' + (${record.receiptNo} ?: '未編號')">第 1 次收款</span>
+                    <div class="actions no-print">
+                        <button class="btn btn-outline btn-compact" type="button" th:onclick="'window.print()'">列印</button>
+                        <button class="btn btn-primary btn-compact" type="submit" th:form="'editPaymentForm' + ${record.paymentId}">儲存本次收款</button>
+                        <form method="post" th:action="@{'/payments/receivables/' + ${order.salesId} + '/records/' + ${record.paymentId} + '/delete'}" onsubmit="return confirm('確定刪除此筆收款？刪除後銷貨單已收 / 未收金額會重新計算。');">
+                            <button class="btn btn-danger btn-compact" type="submit">刪除此筆收款</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post" th:id="'editPaymentForm' + ${record.paymentId}"
+                          th:action="@{'/payments/receivables/' + ${order.salesId} + '/records/' + ${record.paymentId} + '/update'}"
+                          class="payment-record-edit-form">
+                        <div class="grid grid-4">
+                            <div><label>收款日期</label><input type="date" name="paymentDate" th:value="${record.paymentDate}"></div>
+                            <div>
+                                <label>收款方式</label>
+                                <select name="method">
+                                    <option value="CASH" th:selected="${record.paymentMethod == 'CASH'}">現金</option>
+                                    <option value="TRANSFER" th:selected="${record.paymentMethod == 'TRANSFER'}">轉帳</option>
+                                </select>
+                            </div>
+                            <div><label>本次收款金額</label><input readonly class="record-total" th:value="${record.amount}"></div>
+                            <div><label>備註</label><input name="note" th:value="${record.note}"></div>
+                        </div>
+                        <div class="table-scroll vertical-scroll payment-record-items">
+                            <table class="resizable-table" th:attr="data-table-key='payment-record-' + ${record.paymentId}">
+                                <thead>
+                                <tr>
+                                    <th>品號</th>
+                                    <th>品名</th>
+                                    <th>小名</th>
+                                    <th>單價</th>
+                                    <th>銷貨數量</th>
+                                    <th>本次收款數量</th>
+                                    <th>本次收款金額</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="pi : ${block.items}">
+                                    <td th:text="${pi.productCode}"></td>
+                                    <td th:text="${pi.productName}"></td>
+                                    <td th:text="${pi.productAlias}"></td>
+                                    <td th:text="${pi.unitPrice}"></td>
+                                    <td th:text="${pi.salesQuantity}"></td>
+                                    <td>
+                                        <input type="hidden" name="paymentItemIds" th:value="${pi.paymentItemId}">
+                                        <input class="edit-receive-qty" name="receivedQuantities" type="number" min="0" step="1"
+                                               th:value="${pi.receivedQuantity}"
+                                               th:attr="data-unit-price=${pi.unitPrice},data-original-qty=${pi.receivedQuantity}">
+                                    </td>
+                                    <td><input class="edit-receive-amount" name="receivedAmounts" type="number" min="0" step="1" th:value="${pi.amount}" readonly></td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(block.items)}"><td colspan="7">此收款紀錄無品項。</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card" th:if="${#lists.isEmpty(recordBlocks)}">
+                <div class="card-header">收款紀錄</div>
+                <div class="card-body">
+                    <div class="alert alert-info">尚無收款紀錄。請使用下方「剩餘未收款」新增第一筆收款。</div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" th:if="${order.unpaidAmount != null && order.unpaidAmount > 0}" th:action="@{'/payments/receivables/' + ${order.salesId} + '/receive-items'}" id="receiveForm">
+            <div class="card receive-entry-card">
+                <div class="card-header with-actions">
+                    <span>剩餘未收款 / 新增收款</span>
+                    <div class="actions no-print">
+                        <button class="btn btn-outline btn-compact" type="button" onclick="selectAllReceivables()">全部收款</button>
+                        <button class="btn btn-outline btn-compact" type="button" onclick="clearCurrentReceivables()">清除本次</button>
+                        <button class="btn btn-outline btn-compact" type="button" onclick="openColumnChooser('receiveItemsTable')">顯示欄位</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h3 class="section-subtitle">收款資訊</h3>
+                    <div class="grid grid-4">
+                        <div>
+                            <label>收款日期</label>
+                            <input type="date" name="paymentDate" th:value="${today}">
+                        </div>
+                        <div>
+                            <label>收款方式</label>
+                            <select name="method">
+                                <option value="CASH">現金</option>
+                                <option value="TRANSFER">轉帳</option>
+                            </select>
+                        </div>
+                        <div><label>本次新增收款金額</label><input id="currentReceiveTotal" readonly value="0"></div>
+                        <div><label>備註</label><input name="note" placeholder="收款備註"></div>
+                    </div>
+
+                    <div class="alert alert-info" style="margin-top:16px;">
+                        此區只列出或保留剩餘未收款的數量與金額。新增後會在上方多出一個收款區塊，剩餘數量會繼續往下延伸。
+                    </div>
+
+                    <h3 class="section-subtitle receive-items-title">剩餘未收品項</h3>
+                    <div class="table-scroll vertical-scroll">
+                        <table id="receiveItemsTable" class="resizable-table" data-table-key="payment-receive-items">
+                            <thead>
+                            <tr>
+                                <th>品號</th>
+                                <th>品名</th>
+                                <th>小名</th>
+                                <th>銷貨數量</th>
+                                <th>單價</th>
+                                <th>應收金額</th>
+                                <th>已收數量</th>
+                                <th>已收金額</th>
+                                <th>剩餘數量</th>
+                                <th>剩餘未收金額</th>
+                                <th class="no-print" data-no-resize="true">全數收款</th>
+                                <th class="no-print">本次收款數量</th>
+                                <th class="no-print">本次收款金額</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="row : ${items}" th:with="item=${row.item}" th:if="${row.unpaidQuantity > 0 || row.unpaidAmount > 0}">
+                                <td th:text="${item.productCode}"></td>
+                                <td th:text="${item.productName}"></td>
+                                <td th:text="${item.productAlias}"></td>
+                                <td th:text="${item.quantity}"></td>
+                                <td th:text="${item.unitPrice}"></td>
+                                <td th:text="${item.amount}"></td>
+                                <td th:text="${row.paidQuantity}"></td>
+                                <td th:text="${row.paidAmount}"></td>
+                                <td th:text="${row.unpaidQuantity}"></td>
+                                <td th:text="${row.unpaidAmount}"></td>
+                                <td class="no-print">
+                                    <input type="checkbox" class="full-pay"
+                                           th:attr="data-item-id=${item.itemId},data-unpaid-qty=${row.unpaidQuantity},data-unpaid-amount=${row.unpaidAmount}">
+                                </td>
+                                <td class="no-print">
+                                    <input type="hidden" name="salesItemIds" th:value="${item.itemId}">
+                                    <input class="receive-qty" name="receivedQuantities" type="number" min="0" step="1"
+                                           th:max="${row.unpaidQuantity}" value="0"
+                                           th:attr="data-unit-price=${item.unitPrice},data-unpaid-qty=${row.unpaidQuantity},data-unpaid-amount=${row.unpaidAmount}">
+                                </td>
+                                <td class="no-print"><input class="receive-amount" name="receivedAmounts" type="number" min="0" step="1" value="0" readonly></td>
+                            </tr>
+                            <tr th:if="${order.unpaidAmount == null || order.unpaidAmount <= 0}"><td colspan="13">此銷貨單已全數收款。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="page-bottom-actions payment-submit-actions no-print">
+                        <button class="btn btn-primary" type="submit" th:disabled="${order.unpaidAmount == null || order.unpaidAmount <= 0}">新增收款</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </main>
+</div>
+<script src="/js/table-tools.js"></script>
+<script>
+function toNumber(v){ const n = Number(v || 0); return Number.isFinite(n) ? n : 0; }
+function updateReceiveTotal(){
+  let total = 0;
+  document.querySelectorAll('.receive-amount').forEach(i => total += toNumber(i.value));
+  const target = document.getElementById('currentReceiveTotal');
+  if(target) target.value = total.toFixed(0);
+}
+function syncAmountFromQty(input){
+  const qty = Math.min(toNumber(input.value), toNumber(input.dataset.unpaidQty));
+  input.value = qty;
+  const amount = Math.min(qty * toNumber(input.dataset.unitPrice), toNumber(input.dataset.unpaidAmount));
+  const row = input.closest('tr');
+  row.querySelector('.receive-amount').value = amount.toFixed(0);
+  const full = row.querySelector('.full-pay');
+  if (full) full.checked = qty > 0 && qty === toNumber(input.dataset.unpaidQty);
+  updateReceiveTotal();
+}
+function setRowFullPay(row, enabled){
+  const full = row.querySelector('.full-pay');
+  const qty = row.querySelector('.receive-qty');
+  const amount = row.querySelector('.receive-amount');
+  if (!full || !qty || !amount || full.disabled) return;
+  full.checked = enabled;
+  if (enabled) {
+    qty.value = full.dataset.unpaidQty;
+    amount.value = toNumber(full.dataset.unpaidAmount).toFixed(0);
+  } else {
+    qty.value = 0;
+    amount.value = 0;
+  }
+}
+function selectAllReceivables(){
+  document.querySelectorAll('#receiveItemsTable tbody tr').forEach(row => setRowFullPay(row, true));
+  updateReceiveTotal();
+}
+function clearCurrentReceivables(){
+  document.querySelectorAll('#receiveItemsTable tbody tr').forEach(row => setRowFullPay(row, false));
+  updateReceiveTotal();
+}
+document.querySelectorAll('.receive-qty').forEach(input => {
+  input.addEventListener('input', () => syncAmountFromQty(input));
+});
+document.querySelectorAll('.full-pay').forEach(chk => {
+  chk.addEventListener('change', () => {
+    setRowFullPay(chk.closest('tr'), chk.checked);
+    updateReceiveTotal();
+  });
+});
+document.querySelectorAll('.edit-receive-qty').forEach(input => {
+  input.addEventListener('input', () => {
+    const row = input.closest('tr');
+    const qty = Math.max(0, toNumber(input.value));
+    input.value = qty;
+    row.querySelector('.edit-receive-amount').value = (qty * toNumber(input.dataset.unitPrice)).toFixed(0);
+    const form = input.closest('form');
+    let total = 0;
+    form.querySelectorAll('.edit-receive-amount').forEach(i => total += toNumber(i.value));
+    form.closest('.card').querySelector('.record-total').value = total.toFixed(0);
+  });
+});
+const receiveForm = document.getElementById('receiveForm');
+if(receiveForm){
+  receiveForm.addEventListener('submit', e => {
+    if (toNumber(document.getElementById('currentReceiveTotal').value) <= 0) {
+      e.preventDefault();
+      alert('請至少輸入一筆收款數量或勾選全數收款。');
+    }
+  });
+}
+</script>
+</body>
+</html>

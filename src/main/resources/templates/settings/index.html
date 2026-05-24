@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
-<div class="layout">
+<div class="app">
     <div th:replace="~{fragments :: sidebar('settings')}"></div>
     <main class="main">
         <div class="topbar">
@@ -59,7 +59,7 @@
                     </div>
                 </div>
 
-                <form method="post" action="/settings/google/config" class="search-form">
+                <form method="post" action="/settings/google/config" class="search-form settings-google-form">
                     <div class="grid grid-2">
                         <div>
                             <label>Google OAuth Client ID</label>
@@ -70,7 +70,7 @@
                             <input name="clientSecret" type="password" placeholder="若不修改可留空">
                         </div>
                     </div>
-                    <div class="settings-check-grid">
+                    <div class="settings-check-grid settings-section-gap">
                         <label><input type="checkbox" name="driveEnabled" th:checked="${settings['drive.enabled'] == 'true'}"> 啟用 Google Drive 自動同步</label>
                         <label><input type="checkbox" name="purchasePdf" th:checked="${settings['drive.upload.purchasePdf'] == 'true'}"> 進貨單 PDF 自動上傳</label>
                         <label><input type="checkbox" name="salesPdf" th:checked="${settings['drive.upload.salesPdf'] == 'true'}"> 銷貨單 PDF 自動上傳</label>
@@ -78,13 +78,13 @@
                         <label><input type="checkbox" name="dailyInventory" th:checked="${settings['drive.upload.dailyInventory'] == 'true'}"> 每日庫存表上傳</label>
                         <label>每日庫存表時間 <input name="dailyInventoryTime" type="time" th:value="${settings['drive.dailyInventoryTime'] ?: '23:59'}"></label>
                     </div>
-                    <div class="actions form-actions-separated">
+                    <div class="actions form-actions-separated settings-actions-compact">
                         <button class="btn btn-primary" type="submit">儲存設定</button>
                         <a class="btn btn-outline" href="/settings/google/connect">連接 Google Drive</a>
                     </div>
                 </form>
 
-                <div class="actions form-actions-separated">
+                <div class="actions form-actions-separated settings-actions-compact">
                     <form method="post" action="/settings/google/disconnect" onsubmit="return confirm('確定解除 Google Drive 連接？')">
                         <button class="btn btn-danger" type="submit">解除連接</button>
                     </form>

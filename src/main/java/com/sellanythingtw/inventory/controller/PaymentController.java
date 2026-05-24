@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -36,6 +37,49 @@ public class PaymentController {
         model.addAttribute("paymentType", paymentType);
         model.addAttribute("today", LocalDate.now());
         return "payment/receivables";
+    }
+
+
+    @GetMapping("/payments/receivables/{salesId}")
+    public String receiveDetail(@PathVariable Long salesId, Model model) {
+        Map<String, Object> detail = paymentService.getPaymentDetail(salesId);
+        model.addAllAttributes(detail);
+        model.addAttribute("today", LocalDate.now());
+        return "payment/receive";
+    }
+
+
+
+    @PostMapping("/payments/receivables/{salesId}/records/{paymentId}/delete")
+    public String deletePaymentRecord(@PathVariable Long salesId,
+                                      @PathVariable Long paymentId) {
+        paymentService.deletePaymentRecord(salesId, paymentId);
+        return "redirect:/payments/receivables/" + salesId + "?deleted=1";
+    }
+
+    @PostMapping("/payments/receivables/{salesId}/records/{paymentId}/update")
+    public String updatePaymentRecord(@PathVariable Long salesId,
+                                      @PathVariable Long paymentId,
+                                      @RequestParam String method,
+                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate paymentDate,
+                                      @RequestParam(required = false) String note,
+                                      @RequestParam(required = false) List<Long> paymentItemIds,
+                                      @RequestParam(required = false) List<Integer> receivedQuantities,
+                                      @RequestParam(required = false) List<BigDecimal> receivedAmounts) {
+        paymentService.updatePaymentRecordItems(salesId, paymentId, method, paymentDate, note, paymentItemIds, receivedQuantities, receivedAmounts);
+        return "redirect:/payments/receivables/" + salesId + "?updated=1";
+    }
+
+    @PostMapping("/payments/receivables/{salesId}/receive-items")
+    public String receiveItems(@PathVariable Long salesId,
+                               @RequestParam String method,
+                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate paymentDate,
+                               @RequestParam(required = false) String note,
+                               @RequestParam(required = false) List<Long> salesItemIds,
+                               @RequestParam(required = false) List<Integer> receivedQuantities,
+                               @RequestParam(required = false) List<BigDecimal> receivedAmounts) {
+        paymentService.receivePaymentByItems(salesId, method, paymentDate, note, salesItemIds, receivedQuantities, receivedAmounts);
+        return "redirect:/payments/receivables/" + salesId + "?received=1";
     }
 
     @PostMapping("/payments/{salesId}/receive")
