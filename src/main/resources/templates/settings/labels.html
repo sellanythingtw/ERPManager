@@ -118,7 +118,7 @@
             <div class="card-header">貼紙範本列表</div>
             <div class="card-body">
                 <table>
-                    <thead><tr><th>範本名稱</th><th>尺寸</th><th>邊距</th><th>字級</th><th>條碼</th><th>狀態</th><th>預設</th><th>操作</th></tr></thead>
+                    <thead><tr><th>範本名稱</th><th>尺寸</th><th>邊距</th><th>字級</th><th>條碼</th><th>狀態</th><th>預設</th><th data-no-resize="true" class="operation-th no-print">操作</th></tr></thead>
                     <tbody>
                     <tr th:each="tpl : ${templates}">
                         <td th:text="${tpl.templateName}"></td>
@@ -128,7 +128,7 @@
                         <td th:text="${tpl.barcodeWidthMm + ' x ' + tpl.barcodeHeightMm + ' mm'}"></td>
                         <td><span class="badge" th:classappend="${tpl.active == false ? ' badge-danger' : ' badge-success'}" th:text="${tpl.active == false ? '已作廢' : '正常'}">正常</span></td>
                         <td><span class="badge badge-success" th:if="${tpl.defaultTemplate}">預設</span></td>
-                        <td><a class="btn btn-outline" th:href="@{/settings/label-templates(settingId=${tpl.settingId})}">編輯</a></td>
+                        <td class="operation-cell no-print"><a class="btn btn-outline btn-compact" th:href="@{/settings/label-templates(settingId=${tpl.settingId})}">編輯</a></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(templates)}"><td colspan="8">尚未建立貼紙範本，請點右上角「新增範本」。</td></tr>
                     </tbody>

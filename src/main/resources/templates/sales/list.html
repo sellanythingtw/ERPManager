@@ -62,7 +62,7 @@
                 <table id="salesListTable" class="resizable-table" data-table-key="sales-list">
                     <thead>
                     <tr>
-                        <th>銷貨單號</th><th>單據日期</th><th>銷貨日期</th><th>客戶代號</th><th>客戶名稱</th><th>狀態</th><th>付款類型</th><th>付款狀況</th><th>總數量</th><th>總金額</th><th>PDF</th><th>操作</th>
+                        <th>銷貨單號</th><th>單據日期</th><th>銷貨日期</th><th>客戶代號</th><th>客戶名稱</th><th>狀態</th><th>付款類型</th><th>付款狀況</th><th>總數量</th><th>總金額</th><th>PDF</th><th data-no-resize="true" class="operation-th no-print">操作</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -82,7 +82,7 @@
                             <a th:if="${row.order.pdfPath != null}" th:href="@{/local-file/download(path=${row.order.pdfPath})}">下載</a>
                             <span th:if="${row.order.pdfPath == null}">-</span>
                         </td>
-                        <td><div class="list-row-actions"><a class="btn btn-outline" th:href="@{'/sales/' + ${row.order.salesId}}">查看</a><a class="btn btn-primary" th:if="${row.order.status != 'VOID'}" th:href="@{'/sales/' + ${row.order.salesId} + '?edit=true'}">編輯</a></div></td>
+                        <td class="operation-cell no-print"><div class="list-row-actions"><a class="btn btn-outline" th:href="@{'/sales/' + ${row.order.salesId}}">查看</a><a class="btn btn-primary" th:if="${row.order.status != 'VOID'}" th:href="@{'/sales/' + ${row.order.salesId} + '?edit=true'}">編輯</a></div></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(rows)}"><td colspan="12">無符合條件資料。</td></tr>
                     </tbody>

@@ -54,7 +54,7 @@
     });
     measurer.remove();
     const label = th ? headerLabel(th) : "";
-    if (label === "操作") return Math.min(Math.max(max + 26, 132), 190);
+    if (label === "操作") return Math.min(Math.max(max + 56, 220), 360);
     return Math.min(Math.max(max, 80), 420);
   }
 

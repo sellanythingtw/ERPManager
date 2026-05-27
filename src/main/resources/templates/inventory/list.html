@@ -44,7 +44,7 @@
                         <th data-sort="number" data-filterable="true" data-filter-label="庫存">庫存</th>
                         <th data-sort="number" data-filterable="true" data-filter-label="安全庫存">安全庫存</th>
                         <th data-sort="text" data-filterable="true" data-filter-label="狀況提示">狀況提示</th>
-                        <th class="no-print">操作</th>
+                        <th class="operation-th no-print" data-no-resize="true">操作</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -63,7 +63,7 @@
                         <td th:text="${r.quantity}"></td>
                         <td th:text="${r.safetyStock}"></td>
                         <td class="inventory-status" th:classappend="${r.lowStock} ? ' inventory-low'" th:text="${r.statusText}"></td>
-                        <td class="no-print"><a class="btn btn-outline" th:href="@{'/inventory/products/' + ${r.productId} + '/lots'}">查看批次</a></td>
+                        <td class="operation-cell no-print"><a class="btn btn-outline btn-compact" th:href="@{'/inventory/products/' + ${r.productId} + '/lots'}">查看批次</a></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(rows)}"><td colspan="15">無符合條件資料。</td></tr>
                     </tbody>

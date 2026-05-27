@@ -181,10 +181,10 @@
                         <a class="btn btn-outline btn-compact" th:href="@{/local-file/open-folder(path=${order.labelPdfPath}, back=${'/purchases/' + order.purchaseId})}">打開貼紙資料夾</a>
                     </div>
                     <table class="resizable-table" data-table-key="purchase-lots">
-                        <thead><tr><th>條碼</th><th>品名</th><th>進貨日</th><th>批發價</th><th>銷售價</th><th>剩餘</th><th>列印次數</th><th>操作</th></tr></thead>
+                        <thead><tr><th>條碼</th><th>品名</th><th>進貨日</th><th>批發價</th><th>銷售價</th><th>剩餘</th><th>列印次數</th><th data-no-resize="true" class="operation-th no-print">操作</th></tr></thead>
                         <tbody>
                         <tr th:each="lot : ${lots}">
-                            <td th:text="${lot.barcodeValue}"></td><td th:text="${lot.productName + ' ' + (lot.productAlias ?: '')}"></td><td th:text="${lot.purchaseDateCode}"></td><td th:text="${lot.wholesalePrice}"></td><td th:text="${lot.salePrice}"></td><td th:text="${lot.remainingQuantity}"></td><td th:text="${lot.labelPrintedCount}"></td><td><form method="post" th:action="@{'/labels/lots/' + ${lot.lotId}}" target="_blank"><input type="hidden" name="purchaseId" th:value="${order.purchaseId}"><button class="btn btn-outline" type="submit">列印貼紙</button></form></td>
+                            <td th:text="${lot.barcodeValue}"></td><td th:text="${lot.productName + ' ' + (lot.productAlias ?: '')}"></td><td th:text="${lot.purchaseDateCode}"></td><td th:text="${lot.wholesalePrice}"></td><td th:text="${lot.salePrice}"></td><td th:text="${lot.remainingQuantity}"></td><td th:text="${lot.labelPrintedCount}"></td><td class="operation-cell no-print"><form method="post" th:action="@{'/labels/lots/' + ${lot.lotId}}" target="_blank"><input type="hidden" name="purchaseId" th:value="${order.purchaseId}"><button class="btn btn-outline" type="submit">列印貼紙</button></form></td>
                         </tr>
                         </tbody>
                     </table>

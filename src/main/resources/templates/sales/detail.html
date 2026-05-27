@@ -95,7 +95,7 @@
             <div class="card-body">
                 <table>
                     <thead>
-                    <tr><th>#</th><th>條碼</th><th>品號</th><th>品名</th><th>小名</th><th>供應商</th><th>進貨日</th><th>單價</th><th>數量</th><th>品項備註</th><th>小計</th><th th:if="${order.status == 'DRAFT' and editMode}">操作</th></tr>
+                    <tr><th>#</th><th>條碼</th><th>品號</th><th>品名</th><th>小名</th><th>供應商</th><th>進貨日</th><th>單價</th><th>數量</th><th>品項備註</th><th>小計</th><th class="operation-th no-print" data-no-resize="true" th:if="${order.status == 'DRAFT' and editMode}">操作</th></tr>
                     </thead>
                     <tbody>
                     <tr th:each="item, st : ${items}">
@@ -110,7 +110,7 @@
                         <td th:text="${item.quantity}"></td>
                         <td th:text="${item.itemNote}"></td>
                         <td th:text="${item.amount}"></td>
-                        <td th:if="${order.status == 'DRAFT'}">
+                        <td class="operation-cell no-print" th:if="${order.status == 'DRAFT'}">
                             <form method="post" th:action="@{'/sales/' + ${order.salesId} + '/items/' + ${item.itemId} + '/delete'}">
                                 <button class="btn btn-outline" type="submit">刪除</button>
                             </form>
