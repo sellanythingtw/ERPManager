@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>庫存異動表</title><link rel="stylesheet" href="/css/app.css"></head>
+<body><div class="app">
+<div th:replace="~{fragments :: sidebar('stockMovements')}"></div>
+<main class="main">
+  <div class="topbar"><div><h1>庫存異動表</h1><div class="subtitle">條列目標品項期間內所有進貨與銷貨紀錄。</div></div></div>
+  <div class="card no-print"><div class="card-header">搜尋條件</div><div class="card-body">
+    <form method="get" action="/reports/stock-movements" class="search-form">
+      <div class="grid grid-4">
+        <div><label>品號</label><input name="productCode" data-lookup="products" data-fill="code" th:value="${productCode}" placeholder="雙擊查詢"></div>
+        <div><label>品名</label><input name="productName" data-lookup="products" data-fill="name" th:value="${productName}" placeholder="雙擊查詢"></div>
+        <div><label>起始日期</label><input type="date" name="dateFrom" th:value="${dateFrom}"></div>
+        <div><label>結束日期</label><input type="date" name="dateTo" th:value="${dateTo}"></div>
+      </div>
+      <div class="actions form-actions-separated"><button class="btn btn-primary" type="submit">查詢</button><a class="btn btn-outline" href="/reports/stock-movements">清除</a></div>
+    </form>
+  </div></div>
+  <div class="card"><div class="card-header with-actions"><span>庫存異動列表</span><div class="actions no-print">
+    <button class="btn btn-outline btn-compact" type="button" onclick="openColumnChooser('stockMovementTable')">顯示欄位</button>
+    <button class="btn btn-outline btn-compact" type="button" onclick="window.print()">列印</button>
+    <button class="btn btn-primary btn-compact" type="button" onclick="downloadTableCsv('stockMovementTable','庫存異動表.csv')">下載</button>
+  </div></div>
+  <div class="card-body">
+    <div class="list-summary"><span>筆數：<strong th:text="${summary.rowCount}">0</strong></span><span>總數量：<strong th:text="${summary.totalQuantity}">0</strong></span><span>總金額：<strong th:text="${summary.totalAmount}">0</strong></span></div>
+    <div class="table-scroll vertical-scroll"><table id="stockMovementTable" class="resizable-table" data-table-key="stock-movement-history"><thead><tr>
+      <th>類型</th><th>往來對象代號</th><th>往來對象名稱</th><th>日期</th><th>單號</th><th>品號</th><th>品名</th><th>小名</th><th>規格</th><th>單價</th><th>數量</th><th>進貨數量</th><th>銷貨數量</th><th>總金額</th><th>品項備註</th>
+    </tr></thead><tbody>
+      <tr th:each="r : ${rows}"><td th:text="${r.type}"></td><td th:text="${r.partnerCode}"></td><td th:text="${r.partnerName}"></td><td th:text="${r.date}"></td><td th:text="${r.sourceNo}"></td><td th:text="${r.productCode}"></td><td th:text="${r.productName}"></td><td th:text="${r.productAlias}"></td><td th:text="${r.specification}"></td><td th:text="${r.unitPrice}"></td><td th:text="${r.quantity}"></td><td th:text="${r.quantityIn}"></td><td th:text="${r.quantityOut}"></td><td th:text="${r.amount}"></td><td th:text="${r.itemNote}"></td></tr>
+      <tr th:if="${#lists.isEmpty(rows)}"><td colspan="15">無符合條件資料。</td></tr>
+    </tbody></table></div>
+  </div></div>
+</main></div><script src="/js/lookup-modal.js"></script><script src="/js/table-tools.js"></script></body></html>

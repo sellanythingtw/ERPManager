@@ -2,39 +2,47 @@ package com.sellanythingtw.inventory.service;
 
 import com.sellanythingtw.inventory.entity.Product;
 import com.sellanythingtw.inventory.entity.PurchaseLot;
+import com.sellanythingtw.inventory.entity.Supplier;
 import com.sellanythingtw.inventory.repository.ProductRepository;
 import com.sellanythingtw.inventory.repository.PurchaseLotRepository;
 import com.sellanythingtw.inventory.repository.StockMovementRepository;
+import com.sellanythingtw.inventory.repository.SupplierRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class InventoryService {
     private final ProductRepository productRepository;
     private final PurchaseLotRepository purchaseLotRepository;
     private final StockMovementRepository stockMovementRepository;
+    private final SupplierRepository supplierRepository;
 
     public InventoryService(ProductRepository productRepository,
                             PurchaseLotRepository purchaseLotRepository,
-                            StockMovementRepository stockMovementRepository) {
+                            StockMovementRepository stockMovementRepository,
+                            SupplierRepository supplierRepository) {
         this.productRepository = productRepository;
         this.purchaseLotRepository = purchaseLotRepository;
         this.stockMovementRepository = stockMovementRepository;
+        this.supplierRepository = supplierRepository;
     }
 
     public List<Map<String, Object>> getRealtimeInventory() {
-        return searchRealtimeInventory(null, null, null, null, null);
+        return searchRealtimeInventory(null, null, null, null, null, null);
     }
 
     public List<Map<String, Object>> searchRealtimeInventory(String category, String productName) {
-        return searchRealtimeInventory(category, productName, null, null, null);
+        return searchRealtimeInventory(category, productName, null, null, null, null);
     }
 
-    public List<Map<String, Object>> searchRealtimeInventory(String category, String productName, String color, String stockFilter, String statusFilter) {
+    public List<Map<String, Object>> searchRealtimeInventory(String category, String productName, String color, String stockFilter, String statusFilter, String supplierName) {
         List<Map<String, Object>> result = new ArrayList<>();
         for (Product product : productRepository.findAll()) {
             if (hasText(category) && (product.getCategory() == null || !product.getCategory().contains(category.trim()))) continue;
@@ -44,6 +52,9 @@ public class InventoryService {
                 if (!nameText.contains(key)) continue;
             }
             if (hasText(color) && !safe(product.getColor()).contains(color.trim())) continue;
+
+            String supplierText = supplierTextForProduct(product.getProductId());
+            if (hasText(supplierName) && !supplierText.contains(supplierName.trim())) continue;
 
             int quantity = stockMovementRepository.getProductQuantity(product.getProductId());
             int safety = product.getSafetyStock() == null ? 0 : product.getSafetyStock();
@@ -63,6 +74,7 @@ public class InventoryService {
             row.put("category", product.getCategory());
             row.put("productName", product.getProductName());
             row.put("productAlias", product.getProductAlias());
+            row.put("supplierText", supplierText);
             row.put("specification", product.getSpecification());
             row.put("unit", product.getUnit());
             row.put("defaultPurchasePrice", product.getDefaultPurchasePrice());
@@ -80,6 +92,52 @@ public class InventoryService {
             result.add(row);
         }
         return result;
+    }
+
+
+    public Map<String, Object> inventorySummary(List<Map<String, Object>> rows) {
+        int itemCount = rows == null ? 0 : rows.size();
+        int totalQuantity = 0;
+        BigDecimal stockAmount = BigDecimal.ZERO;
+        if (rows != null) {
+            for (Map<String, Object> row : rows) {
+                int qty = row.get("quantity") instanceof Number n ? n.intValue() : 0;
+                totalQuantity += qty;
+                Object productIdObj = row.get("productId");
+                Long productId = productIdObj instanceof Number n ? n.longValue() : null;
+                if (productId != null) stockAmount = stockAmount.add(stockAmountForProduct(productId));
+            }
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("itemCount", itemCount);
+        result.put("totalQuantity", totalQuantity);
+        result.put("stockAmount", stockAmount);
+        return result;
+    }
+
+    private BigDecimal stockAmountForProduct(Long productId) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (PurchaseLot lot : purchaseLotRepository.findByProductIdAndRemainingQuantityGreaterThanOrderByPurchaseDateDesc(productId, 0)) {
+            int qty = lot.getRemainingQuantity() == null ? 0 : lot.getRemainingQuantity();
+            BigDecimal price = lot.getWholesalePrice() == null ? BigDecimal.ZERO : lot.getWholesalePrice();
+            total = total.add(price.multiply(BigDecimal.valueOf(qty)));
+        }
+        return total;
+    }
+
+    private String supplierTextForProduct(Long productId) {
+        Set<String> parts = new HashSet<>();
+        for (PurchaseLot lot : purchaseLotRepository.findByProductIdAndRemainingQuantityGreaterThanOrderByPurchaseDateDesc(productId, 0)) {
+            String code = safe(lot.getSupplierCode());
+            String name = "";
+            if (lot.getSupplierId() != null) {
+                Supplier s = supplierRepository.findById(lot.getSupplierId()).orElse(null);
+                if (s != null) name = safe(s.getSupplierName());
+            }
+            String joined = (code + " " + name).trim();
+            if (!joined.isEmpty()) parts.add(joined);
+        }
+        return String.join(" / ", parts);
     }
 
     public List<Map<String, Object>> getOpenLots(Long productId) {
@@ -105,12 +163,13 @@ public class InventoryService {
     public String toCsv(List<Map<String, Object>> rows) {
         StringBuilder sb = new StringBuilder();
         sb.append("\uFEFF");
-        sb.append("品號,類別,品名,小名,規格,顏色,單位,預設進貨價,預設銷貨價,備註,產品狀態,庫存,安全庫存,狀況\n");
+        sb.append("品號,類別,品名,小名,供應商,規格,顏色,單位,預設進貨價,預設銷貨價,備註,產品狀態,庫存,安全庫存,狀況\n");
         for (Map<String, Object> r : rows) {
             sb.append(csv(r.get("productCode"))).append(',')
               .append(csv(r.get("category"))).append(',')
               .append(csv(r.get("productName"))).append(',')
               .append(csv(r.get("productAlias"))).append(',')
+              .append(csv(r.get("supplierText"))).append(',')
               .append(csv(r.get("specification"))).append(',')
               .append(csv(r.get("color"))).append(',')
               .append(csv(r.get("unit"))).append(',')

@@ -26,13 +26,17 @@ public class InventoryController {
                             @RequestParam(required = false) String color,
                             @RequestParam(required = false) String stockFilter,
                             @RequestParam(required = false) String statusFilter,
+                            @RequestParam(required = false) String supplierName,
                             Model model) {
-        model.addAttribute("rows", inventoryService.searchRealtimeInventory(category, productName, color, stockFilter, statusFilter));
+        var rows = inventoryService.searchRealtimeInventory(category, productName, color, stockFilter, statusFilter, supplierName);
+        model.addAttribute("rows", rows);
+        model.addAttribute("summary", inventoryService.inventorySummary(rows));
         model.addAttribute("category", category);
         model.addAttribute("productName", productName);
         model.addAttribute("color", color);
         model.addAttribute("stockFilter", stockFilter);
         model.addAttribute("statusFilter", statusFilter);
+        model.addAttribute("supplierName", supplierName);
         return "inventory/list";
     }
 
@@ -48,8 +52,9 @@ public class InventoryController {
                                             @RequestParam(required = false) String productName,
                                             @RequestParam(required = false) String color,
                                             @RequestParam(required = false) String stockFilter,
-                                            @RequestParam(required = false) String statusFilter) {
-        String csv = inventoryService.toCsv(inventoryService.searchRealtimeInventory(category, productName, color, stockFilter, statusFilter));
+                                            @RequestParam(required = false) String statusFilter,
+                                            @RequestParam(required = false) String supplierName) {
+        String csv = inventoryService.toCsv(inventoryService.searchRealtimeInventory(category, productName, color, stockFilter, statusFilter, supplierName));
         byte[] bytes = csv.getBytes(StandardCharsets.UTF_8);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=inventory.csv")
@@ -63,7 +68,8 @@ public class InventoryController {
                                             @RequestParam(required = false) String productName,
                                             @RequestParam(required = false) String color,
                                             @RequestParam(required = false) String stockFilter,
-                                            @RequestParam(required = false) String statusFilter) {
-        return ApiResult.ok("OK", "data", inventoryService.searchRealtimeInventory(category, productName, color, stockFilter, statusFilter));
+                                            @RequestParam(required = false) String statusFilter,
+                                            @RequestParam(required = false) String supplierName) {
+        return ApiResult.ok("OK", "data", inventoryService.searchRealtimeInventory(category, productName, color, stockFilter, statusFilter, supplierName));
     }
 }

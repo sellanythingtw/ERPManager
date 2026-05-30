@@ -64,7 +64,14 @@
                     <button class="btn btn-primary btn-compact" type="button" onclick="downloadTableCsv('paymentReceivablesTable', '帳款列表.csv')">下載</button>
                 </div>
             </div>
-            <div class="card-body table-scroll vertical-scroll">
+            <div class="card-body">
+                <div class="list-summary">
+                    <span>已沖帳訂單數：<strong th:text="${summary.paidOrderCount}">0</strong></span>
+                    <span>已收款總金額：<strong th:text="${summary.paidTotal}">0</strong></span>
+                    <span>待收款訂單數：<strong th:text="${summary.unpaidOrderCount}">0</strong></span>
+                    <span>待收款總金額：<strong th:text="${summary.unpaidTotal}">0</strong></span>
+                </div>
+                <div class="table-scroll vertical-scroll">
                 <table id="paymentReceivablesTable" class="resizable-table" data-table-key="payment-receivables">
                     <thead>
                     <tr>
@@ -103,6 +110,7 @@
                     <tr th:if="${#lists.isEmpty(rows)}"><td colspan="11">無符合條件資料</td></tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
     </main>

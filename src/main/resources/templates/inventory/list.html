@@ -34,6 +34,7 @@
                         <th data-sort="text" data-filterable="true" data-filter-label="類別">類別</th>
                         <th data-sort="text" data-filterable="true" data-filter-label="品名">品名</th>
                         <th data-sort="text" data-filterable="true" data-filter-label="小名">小名</th>
+                        <th data-sort="text" data-filterable="true" data-filter-label="供應商">供應商</th>
                         <th data-sort="text" data-filterable="true" data-filter-label="規格">規格</th>
                         <th data-sort="text" data-filterable="true" data-filter-label="顏色">顏色</th>
                         <th data-sort="text" data-filterable="true" data-filter-label="單位">單位</th>
@@ -53,6 +54,7 @@
                         <td th:text="${r.category}"></td>
                         <td th:text="${r.productName}"></td>
                         <td th:text="${r.productAlias}"></td>
+                        <td th:text="${r.supplierText}"></td>
                         <td th:text="${r.specification}"></td>
                         <td th:text="${r.color}"></td>
                         <td th:text="${r.unit}"></td>
@@ -65,7 +67,7 @@
                         <td class="inventory-status" th:classappend="${r.lowStock} ? ' inventory-low'" th:text="${r.statusText}"></td>
                         <td class="operation-cell no-print"><a class="btn btn-outline btn-compact" th:href="@{'/inventory/products/' + ${r.productId} + '/lots'}">查看批次</a></td>
                     </tr>
-                    <tr th:if="${#lists.isEmpty(rows)}"><td colspan="15">無符合條件資料。</td></tr>
+                    <tr th:if="${#lists.isEmpty(rows)}"><td colspan="16">無符合條件資料。</td></tr>
                     </tbody>
                 </table>
                 </div>

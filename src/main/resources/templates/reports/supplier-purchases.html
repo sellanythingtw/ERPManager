@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>供應商歷史進貨</title><link rel="stylesheet" href="/css/app.css"></head>
+<body><div class="app">
+<div th:replace="~{fragments :: sidebar('supplierPurchases')}"></div>
+<main class="main">
+  <div class="topbar"><div><h1>供應商歷史進貨</h1><div class="subtitle">條列供應商所有進貨品項，可依供應商與日期查詢。</div></div></div>
+  <div class="card no-print"><div class="card-header">搜尋條件</div><div class="card-body">
+    <form method="get" action="/reports/supplier-purchases" class="search-form">
+      <div class="grid grid-4">
+        <div><label>供應商代號</label><input name="supplierCode" data-lookup="suppliers" data-fill="code" th:value="${supplierCode}" placeholder="雙擊查詢"></div>
+        <div><label>供應商名稱</label><input name="supplierName" data-lookup="suppliers" data-fill="name" th:value="${supplierName}" placeholder="雙擊查詢"></div>
+        <div><label>起始日期</label><input type="date" name="dateFrom" th:value="${dateFrom}"></div>
+        <div><label>結束日期</label><input type="date" name="dateTo" th:value="${dateTo}"></div>
+      </div>
+      <div class="actions form-actions-separated"><button class="btn btn-primary" type="submit">查詢</button><a class="btn btn-outline" href="/reports/supplier-purchases">清除</a></div>
+    </form>
+  </div></div>
+  <div class="card"><div class="card-header with-actions"><span>進貨品項列表</span><div class="actions no-print">
+    <button class="btn btn-outline btn-compact" type="button" onclick="openColumnChooser('supplierPurchaseTable')">顯示欄位</button>
+    <button class="btn btn-outline btn-compact" type="button" onclick="window.print()">列印</button>
+    <button class="btn btn-primary btn-compact" type="button" onclick="downloadTableCsv('supplierPurchaseTable','供應商歷史進貨.csv')">下載</button>
+  </div></div>
+  <div class="card-body">
+    <div class="list-summary"><span>筆數：<strong th:text="${summary.rowCount}">0</strong></span><span>總數量：<strong th:text="${summary.totalQuantity}">0</strong></span><span>總金額：<strong th:text="${summary.totalAmount}">0</strong></span></div>
+    <div class="table-scroll vertical-scroll"><table id="supplierPurchaseTable" class="resizable-table" data-table-key="supplier-purchase-history"><thead><tr>
+      <th>供應商代號</th><th>供應商名稱</th><th>日期</th><th>進貨單號</th><th>品號</th><th>品名</th><th>小名</th><th>規格</th><th>單價</th><th>數量</th><th>總金額</th><th>品項備註</th>
+    </tr></thead><tbody>
+      <tr th:each="r : ${rows}"><td th:text="${r.supplierCode}"></td><td th:text="${r.supplierName}"></td><td th:text="${r.date}"></td><td th:text="${r.sourceNo}"></td><td th:text="${r.productCode}"></td><td th:text="${r.productName}"></td><td th:text="${r.productAlias}"></td><td th:text="${r.specification}"></td><td th:text="${r.unitPrice}"></td><td th:text="${r.quantity}"></td><td th:text="${r.amount}"></td><td th:text="${r.itemNote}"></td></tr>
+      <tr th:if="${#lists.isEmpty(rows)}"><td colspan="12">無符合條件資料。</td></tr>
+    </tbody></table></div>
+  </div></div>
+</main></div><script src="/js/lookup-modal.js"></script><script src="/js/table-tools.js"></script></body></html>

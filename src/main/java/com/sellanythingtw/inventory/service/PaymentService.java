@@ -84,6 +84,36 @@ public class PaymentService {
         return rows;
     }
 
+
+    public Map<String, Object> receivablesSummary(List<Map<String, Object>> rows) {
+        int paidOrderCount = 0;
+        int unpaidOrderCount = 0;
+        BigDecimal paidTotal = BigDecimal.ZERO;
+        BigDecimal unpaidTotal = BigDecimal.ZERO;
+        if (rows != null) {
+            for (Map<String, Object> row : rows) {
+                SalesOrder order = (SalesOrder) row.get("order");
+                if (order == null) continue;
+                BigDecimal paid = nvl(order.getPaidAmount());
+                BigDecimal unpaid = nvl(order.getUnpaidAmount());
+                if (paid.compareTo(BigDecimal.ZERO) > 0) {
+                    paidOrderCount++;
+                    paidTotal = paidTotal.add(paid);
+                }
+                if (unpaid.compareTo(BigDecimal.ZERO) > 0) {
+                    unpaidOrderCount++;
+                    unpaidTotal = unpaidTotal.add(unpaid);
+                }
+            }
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("paidOrderCount", paidOrderCount);
+        result.put("paidTotal", paidTotal);
+        result.put("unpaidOrderCount", unpaidOrderCount);
+        result.put("unpaidTotal", unpaidTotal);
+        return result;
+    }
+
     public Map<String, Object> getPaymentDetail(Long salesId) {
         SalesOrder order = salesOrderRepository.findById(salesId)
                 .orElseThrow(() -> new IllegalArgumentException("找不到銷貨單"));

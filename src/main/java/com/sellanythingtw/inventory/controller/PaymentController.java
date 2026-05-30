@@ -28,7 +28,9 @@ public class PaymentController {
                               @RequestParam(required = false) String paymentStatus,
                               @RequestParam(required = false) String paymentType,
                               Model model) {
-        model.addAttribute("rows", paymentService.searchReceivables(customerCode, customerName, dateFrom, dateTo, paymentStatus, paymentType));
+        var rows = paymentService.searchReceivables(customerCode, customerName, dateFrom, dateTo, paymentStatus, paymentType);
+        model.addAttribute("rows", rows);
+        model.addAttribute("summary", paymentService.receivablesSummary(rows));
         model.addAttribute("customerCode", customerCode);
         model.addAttribute("customerName", customerName);
         model.addAttribute("dateFrom", dateFrom);

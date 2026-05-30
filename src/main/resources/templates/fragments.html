@@ -14,6 +14,9 @@
     <div class="nav-title">庫存 / 沖帳</div>
     <div th:class="${active == 'inventory'} ? 'nav-item active' : 'nav-item'"><a href="/inventory">即時庫存</a></div>
     <div th:class="${active == 'payment'} ? 'nav-item active' : 'nav-item'"><a href="/payments/receivables">沖帳管理</a></div>
+    <div th:class="${active == 'supplierPurchases'} ? 'nav-item active' : 'nav-item'"><a href="/reports/supplier-purchases">供應商歷史進貨</a></div>
+    <div th:class="${active == 'customerSales'} ? 'nav-item active' : 'nav-item'"><a href="/reports/customer-sales">客戶歷史銷貨</a></div>
+    <div th:class="${active == 'stockMovements'} ? 'nav-item active' : 'nav-item'"><a href="/reports/stock-movements">庫存異動表</a></div>
     <div class="nav-title">系統設定</div>
     <div th:class="${active == 'settings'} ? 'nav-item active' : 'nav-item'"><a href="/settings">設定</a></div>
     <div th:class="${active == 'labelTemplates'} ? 'nav-item active' : 'nav-item'"><a href="/settings/label-templates">進貨貼紙範本</a></div>
