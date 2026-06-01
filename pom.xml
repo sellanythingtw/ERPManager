@@ -13,7 +13,7 @@
 
     <groupId>com.sellanythingtw</groupId>
     <artifactId>ERPManager</artifactId>
-    <version>0.0.32</version>
+    <version>0.0.37</version>
     <name>ERPManager</name>
 
     <properties>

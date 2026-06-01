@@ -15,6 +15,7 @@ import org.springframework.web.util.UriUtils;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -73,7 +74,7 @@ public class PurchaseOrderController {
                 if (!haystack.contains(k)) return false;
             }
             return true;
-        }).toList();
+        }).sorted(Comparator.comparing(o -> safe(o.getPurchaseNo()))).toList();
         model.addAttribute("orders", orders);
         model.addAttribute("suppliers", suppliers);
         model.addAttribute("keyword", keyword);

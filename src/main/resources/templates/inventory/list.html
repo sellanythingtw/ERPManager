@@ -16,16 +16,59 @@
             </div>
         </div>
 
+
+        <div class="card no-print">
+            <div class="card-header">查詢條件</div>
+            <div class="card-body">
+                <form method="get" action="/inventory" class="search-form">
+                    <div class="grid grid-4">
+                        <div><label>類別</label><input name="category" th:value="${category}" placeholder="依產品類別查詢"></div>
+                        <div><label>品名 / 品號 / 小名</label><input name="productName" th:value="${productName}" placeholder="輸入關鍵字"></div>
+                        <div><label>供應商名稱</label><input name="supplierName" data-lookup="suppliers" data-fill="name" th:value="${supplierName}" placeholder="雙擊查詢供應商"></div>
+                        <div><label>顏色</label><input name="color" th:value="${color}" placeholder="輸入顏色"></div>
+                    </div>
+                    <div class="grid grid-4">
+                        <div>
+                            <label>庫存</label>
+                            <select name="stockFilter">
+                                <option value="" th:selected="${stockFilter == null || stockFilter == ''}">全部</option>
+                                <option value="POSITIVE" th:selected="${stockFilter == 'POSITIVE'}">有庫存</option>
+                                <option value="ZERO" th:selected="${stockFilter == 'ZERO'}">零庫存</option>
+                                <option value="LOW" th:selected="${stockFilter == 'LOW'}">低於安全庫存</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>狀態提示</label>
+                            <select name="statusFilter">
+                                <option value="" th:selected="${statusFilter == null || statusFilter == ''}">全部</option>
+                                <option value="NORMAL" th:selected="${statusFilter == 'NORMAL'}">庫存充足</option>
+                                <option value="LOW" th:selected="${statusFilter == 'LOW'}">庫存水位低</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="actions form-actions-separated">
+                        <button class="btn btn-primary" type="submit">查詢</button>
+                        <a class="btn btn-outline" href="/inventory">清除</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header with-actions">
                 <span>庫存列表</span>
                 <div class="actions no-print">
                     <button class="btn btn-outline btn-compact" type="button" onclick="openColumnChooser('inventoryTable')">顯示欄位</button>
                     <button class="btn btn-outline btn-compact" onclick="window.print()">列印</button>
-                    <a class="btn btn-primary btn-compact" href="/inventory/export.csv">下載</a>
+                    <a class="btn btn-primary btn-compact" th:href="@{/inventory/export.csv(category=${category},productName=${productName},supplierName=${supplierName},color=${color},stockFilter=${stockFilter},statusFilter=${statusFilter})}">下載</a>
                 </div>
             </div>
             <div class="card-body">
+                <div class="list-summary">
+                    <span>品項數量：<strong th:text="${summary.itemCount}">0</strong></span>
+                    <span>總數量：<strong th:text="${summary.totalQuantity}">0</strong></span>
+                    <span>庫存金額：<strong th:text="${summary.stockAmount}">0</strong></span>
+                </div>
                 <div class="table-scroll inventory-table-scroll vertical-scroll">
                 <table id="inventoryTable" class="excel-table resizable-table filterable-table" data-table-key="inventory">
                     <thead>

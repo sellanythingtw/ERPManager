@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Comparator;
 import java.util.Map;
 
 @Service
@@ -67,7 +68,7 @@ public class PurchaseOrderService {
     }
 
     public List<PurchaseOrder> listAll() {
-        return purchaseOrderRepository.findAllByOrderByCreatedAtDesc();
+        return purchaseOrderRepository.findAll().stream().sorted(Comparator.comparing(o -> safe(o.getPurchaseNo()))).toList();
     }
 
     public PurchaseOrder getOrder(Long purchaseId) {
@@ -552,4 +553,6 @@ public class PurchaseOrderService {
     public List<PurchaseLot> listLots(Long purchaseId) {
         return lotRepository.findByPurchaseId(purchaseId);
     }
+
+    private String safe(String value) { return value == null ? "" : value; }
 }

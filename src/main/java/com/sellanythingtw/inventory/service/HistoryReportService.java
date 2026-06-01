@@ -60,6 +60,7 @@ public class HistoryReportService {
                 rows.add(row);
             }
         }
+        rows.sort(Comparator.comparing(r -> (LocalDate) r.get("date"), Comparator.nullsLast(Comparator.naturalOrder())));
         return rows;
     }
 
@@ -89,6 +90,7 @@ public class HistoryReportService {
                 rows.add(row);
             }
         }
+        rows.sort(Comparator.comparing(r -> (LocalDate) r.get("date"), Comparator.nullsLast(Comparator.naturalOrder())));
         return rows;
     }
 
@@ -96,13 +98,7 @@ public class HistoryReportService {
         List<Map<String, Object>> rows = new ArrayList<>();
         rows.addAll(purchaseMovements(productCode, productName, dateFrom, dateTo));
         rows.addAll(salesMovements(productCode, productName, dateFrom, dateTo));
-        rows.sort((a, b) -> {
-            LocalDate da = (LocalDate) a.get("date");
-            LocalDate db = (LocalDate) b.get("date");
-            da = da == null ? LocalDate.MIN : da;
-            db = db == null ? LocalDate.MIN : db;
-            return db.compareTo(da);
-        });
+        rows.sort(Comparator.comparing(r -> (LocalDate) r.get("date"), Comparator.nullsLast(Comparator.naturalOrder())));
         return rows;
     }
 

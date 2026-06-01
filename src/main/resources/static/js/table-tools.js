@@ -42,26 +42,44 @@
     sample.forEach(cell => {
       const style = window.getComputedStyle(cell);
       measurer.style.font = style.font;
-      // Clone header text without tool buttons/resizer noise.
       let text = '';
       if (cell.tagName && cell.tagName.toLowerCase() === 'th') {
-        text = Array.from(cell.childNodes).filter(n => n.nodeType === Node.TEXT_NODE).map(n => n.textContent).join('').trim() || cell.innerText.trim();
+        text = headerLabel(cell);
       } else {
         text = cell.innerText.trim();
       }
       measurer.textContent = text || '';
       max = Math.max(max, Math.ceil(measurer.getBoundingClientRect().width) + 36);
     });
-    measurer.remove();
+
     const label = th ? headerLabel(th) : "";
+    if (th) {
+      const style = window.getComputedStyle(th);
+      measurer.style.font = style.font;
+      measurer.textContent = label || '';
+      let headerWidth = Math.ceil(measurer.getBoundingClientRect().width) + 64;
+      if (th.dataset.filterable === 'true') headerWidth += 46;
+      if (th.dataset.sort) headerWidth += 24;
+      if (th.querySelector('.filter-clear')) headerWidth += 28;
+      max = Math.max(max, headerWidth);
+    }
+    measurer.remove();
+
+    const key = tableKey(table);
+    if (key === "supplier-purchase-history" && idx === 0) return Math.max(max, 230);
+    if (key === "supplier-purchase-history" && idx === 1) return Math.max(max, 270);
+    const explicitMin = th && th.dataset.minWidth ? Number(th.dataset.minWidth) || 0 : 0;
+    max = Math.max(max, explicitMin);
     if (label === "操作") return Math.min(Math.max(max + 56, 220), 360);
-    return Math.min(Math.max(max, 80), 420);
+    if (th && th.dataset.filterable === 'true') return Math.min(Math.max(max, explicitMin || 150), 720);
+    return Math.min(Math.max(max, explicitMin || 110), 720);
   }
 
   function setColumnWidth(table, idx, width){
     const th = table.querySelectorAll('thead th')[idx];
     if (!th) return;
-    const w = Math.max(70, Math.round(width));
+    const explicitMin = th && th.dataset.minWidth ? Number(th.dataset.minWidth) || 0 : 0;
+    const w = Math.max(70, explicitMin, Math.round(width));
     const col = ensureColGroup(table).children[idx];
     if (col) col.style.setProperty('width', w + 'px', 'important');
     th.style.setProperty('width', w + 'px', 'important');
@@ -81,7 +99,7 @@
   }
 
   function ensureColGroup(table){
-    let colgroup = table.querySelector('colgroup[data-generated="true"]');
+    let colgroup = table.querySelector('colgroup') || table.querySelector('colgroup[data-generated="true"]');
     const count = table.querySelectorAll('thead th').length;
     if (!colgroup) {
       colgroup = document.createElement('colgroup');
@@ -145,7 +163,8 @@
     ths.forEach((th, idx) => {
       const fixed = isFixedWidthColumn(th);
       th.classList.add(fixed ? 'fixed-width-th' : 'resizable-th');
-      const initial = fixed ? measureColumnWidth(table, idx) : (saved && saved[idx] ? saved[idx] : measureColumnWidth(table, idx));
+      const measured = measureColumnWidth(table, idx);
+      const initial = fixed ? measured : (saved && saved[idx] ? Math.max(saved[idx], measured) : measured);
       setColumnWidth(table, idx, initial);
 
       if (fixed) {
@@ -155,7 +174,7 @@
 
       const grip = document.createElement('span');
       grip.className = 'column-resizer no-print';
-      grip.title = '拖曳調整欄寬；點一下自動符合最寬資料';
+      grip.title = '拖曳調整欄寬；點一下或雙擊自動符合欄名與最寬資料';
       th.appendChild(grip);
 
       let startX = 0, startW = 0, moved = false;

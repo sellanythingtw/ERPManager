@@ -8,6 +8,7 @@ import com.sellanythingtw.inventory.repository.ProductRepository;
 import com.sellanythingtw.inventory.repository.SupplierRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -17,17 +18,33 @@ public class MasterDataService {
     private final SupplierRepository supplierRepository;
     private final NumberSequenceService sequenceService;
 
-    public MasterDataService(ProductRepository productRepository, CustomerRepository customerRepository,
-                             SupplierRepository supplierRepository, NumberSequenceService sequenceService) {
+    public MasterDataService(ProductRepository productRepository,
+                             CustomerRepository customerRepository,
+                             SupplierRepository supplierRepository,
+                             NumberSequenceService sequenceService) {
         this.productRepository = productRepository;
         this.customerRepository = customerRepository;
         this.supplierRepository = supplierRepository;
         this.sequenceService = sequenceService;
     }
 
-    public List<Product> listProducts() { return productRepository.findAll(); }
-    public List<Customer> listCustomers() { return customerRepository.findAll(); }
-    public List<Supplier> listSuppliers() { return supplierRepository.findAll(); }
+    public List<Product> listProducts() {
+        return productRepository.findAll().stream()
+                .sorted(Comparator.comparing(p -> safe(p.getProductCode())))
+                .toList();
+    }
+
+    public List<Customer> listCustomers() {
+        return customerRepository.findAll().stream()
+                .sorted(Comparator.comparing(c -> safe(c.getCustomerCode())))
+                .toList();
+    }
+
+    public List<Supplier> listSuppliers() {
+        return supplierRepository.findAll().stream()
+                .sorted(Comparator.comparing(s -> safe(s.getSupplierCode())))
+                .toList();
+    }
 
     public Product saveProduct(Product product) {
         if (product.getProductCode() == null || product.getProductCode().isBlank()) {
@@ -105,5 +122,9 @@ public class MasterDataService {
         Supplier supplier = supplierRepository.findById(supplierId).orElseThrow(() -> new IllegalArgumentException("找不到供應商"));
         supplier.setActive(true);
         return supplierRepository.save(supplier);
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
     }
 }

@@ -329,7 +329,7 @@ input.readonly-field {
 }
 
 
-/* v0.0.32 spacing corrections */
+/* v0.0.37 spacing corrections */
 .search-form .grid + .grid {
   margin-top: 18px !important;
 }
@@ -359,7 +359,7 @@ input.readonly-field {
 }
 
 
-/* v0.0.32: topbar buttons use the same compact size as general action buttons */
+/* v0.0.37: topbar buttons use the same compact size as general action buttons */
 .topbar .actions,
 .purchase-top-actions {
   display: flex !important;
@@ -414,7 +414,7 @@ input.readonly-field {
 }
 
 
-/* v0.0.32: compact PDF buttons in purchase detail view */
+/* v0.0.37: compact PDF buttons in purchase detail view */
 .btn-compact {
   width: auto !important;
   min-width: 0 !important;
@@ -431,7 +431,7 @@ input.readonly-field {
 }
 
 
-/* v0.0.32: search actions slightly closer to input rows */
+/* v0.0.37: search actions slightly closer to input rows */
 .search-form .actions {
   margin-top: 18px !important;
   padding-top: 2px !important;
@@ -442,7 +442,7 @@ input.readonly-field {
   padding-top: 4px !important;
 }
 
-/* v0.0.32: document edit/new sections should read as white continuous form areas */
+/* v0.0.37: document edit/new sections should read as white continuous form areas */
 .doc-section-card {
   background: #fff !important;
   box-shadow: none !important;
@@ -467,7 +467,7 @@ input.readonly-field {
 }
 
 
-/* v0.0.32: search buttons slightly higher and consistent query controls */
+/* v0.0.37: search buttons slightly higher and consistent query controls */
 .search-form .actions,
 .form-actions-separated {
   margin-top: 10px !important;
@@ -513,7 +513,7 @@ input[type="date"] {
 }
 
 
-/* v0.0.32 final layout overrides */
+/* v0.0.37 final layout overrides */
 .search-form .actions,
 .form-actions-separated,
 .inventory-search-form .actions {
@@ -583,13 +583,13 @@ input[type="date"]::-webkit-datetime-edit-text {
 }
 
 
-/* v0.0.32: larger gap between master-data edit fields and save/cancel buttons */
+/* v0.0.37: larger gap between master-data edit fields and save/cancel buttons */
 .edit-form-actions {
   margin-top: 32px !important;
   padding-top: 0 !important;
 }
 
-/* v0.0.32: master list row action spacing */
+/* v0.0.37: master list row action spacing */
 .list-row-actions {
   display: inline-flex !important;
   align-items: center !important;
@@ -598,7 +598,7 @@ input[type="date"]::-webkit-datetime-edit-text {
 }
 
 
-/* v0.0.32: master-data view topbar and inventory Excel-like controls */
+/* v0.0.37: master-data view topbar and inventory Excel-like controls */
 .excel-filter-bar {
   display: flex;
   gap: 14px;
@@ -631,7 +631,7 @@ input[type="date"]::-webkit-datetime-edit-text {
 }
 
 
-/* v0.0.32: master view topbar wrapper and inventory column filter */
+/* v0.0.37: master view topbar wrapper and inventory column filter */
 .topbar-action-wrap {
   margin-left: auto !important;
   display: flex !important;
@@ -729,7 +729,7 @@ input[type="date"]::-webkit-datetime-edit-text {
 }
 
 
-/* v0.0.32: force hidden master-data topbar actions to stay hidden despite previous !important .topbar .actions rules */
+/* v0.0.37: force hidden master-data topbar actions to stay hidden despite previous !important .topbar .actions rules */
 [hidden] {
   display: none !important;
 }
@@ -746,7 +746,7 @@ input[type="date"]::-webkit-datetime-edit-text {
 }
 
 
-/* v0.0.32: master-data topbar actions are mode-specific.
+/* v0.0.37: master-data topbar actions are mode-specific.
    viewTopActions is created dynamically only in 查看 mode; guard against display overrides. */
 #viewTopActions[hidden],
 #viewTopActions.is-hidden,
@@ -755,7 +755,7 @@ input[type="date"]::-webkit-datetime-edit-text {
 }
 
 
-/* v0.0.32: resizable/persistent tables and Excel-like column filters */
+/* v0.0.37: resizable/persistent tables and Excel-like column filters */
 .table-scroll,
 .inventory-table-scroll,
 .vertical-scroll {
@@ -905,7 +905,7 @@ body.resizing-column {
   margin-top: 12px;
 }
 
-/* v0.0.32: only status text is red for low stock; stock numbers remain normal. */
+/* v0.0.37: only status text is red for low stock; stock numbers remain normal. */
 .inventory-status.inventory-low {
   color: #dc2626;
   font-weight: 800;
@@ -917,7 +917,7 @@ td.inventory-low:not(.inventory-status) {
 }
 
 
-/* v0.0.32: table layout containment and visible column separators */
+/* v0.0.37: table layout containment and visible column separators */
 .main {
   min-width: 0 !important;
   overflow-x: hidden !important;
@@ -983,14 +983,14 @@ td.inventory-low:not(.inventory-status) {
   align-items: center;
 }
 
-/* v0.0.32: ensure low stock red only applies to status text */
+/* v0.0.37: ensure low stock red only applies to status text */
 td.inventory-low:not(.inventory-status) {
   color: inherit !important;
   font-weight: inherit !important;
 }
 
 
-/* v0.0.32: list-card print/download buttons and table autofit refinement */
+/* v0.0.37: list-card print/download buttons and table autofit refinement */
 .card-header.with-actions .actions.no-print {
   margin-left: auto !important;
   justify-content: flex-end !important;
@@ -1029,7 +1029,7 @@ td.inventory-low:not(.inventory-status) {
 }
 
 
-/* v0.0.32: column visibility chooser */
+/* v0.0.37: column visibility chooser */
 .column-chooser-menu {
   position: fixed;
   z-index: 100000;
@@ -1061,7 +1061,7 @@ td.inventory-low:not(.inventory-status) {
 }
 
 
-/* v0.0.32: preserve user-defined column widths across reloads */
+/* v0.0.37: preserve user-defined column widths across reloads */
 .resizable-table {
   width: auto !important;
   max-width: none !important;
@@ -1071,7 +1071,7 @@ td.inventory-low:not(.inventory-status) {
   box-sizing: border-box !important;
 }
 
-/* v0.0.32: query buttons slightly lower */
+/* v0.0.37: query buttons slightly lower */
 .search-form .actions,
 .form-actions-separated,
 .inventory-search-form .actions {
@@ -1080,7 +1080,7 @@ td.inventory-low:not(.inventory-status) {
 }
 
 
-/* v0.0.32: query button row lower, with higher specificity than previous overrides */
+/* v0.0.37: query button row lower, with higher specificity than previous overrides */
 .card .card-body form.search-form > .actions,
 .card .card-body form.search-form > .actions.form-actions-separated,
 form.search-form > .actions.form-actions-separated,
@@ -1089,7 +1089,7 @@ form.search-form > .actions.edit-form-actions {
   padding-top: 8px !important;
 }
 
-/* v0.0.32: settings page */
+/* v0.0.37: settings page */
 .settings-check-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(240px, 1fr));
@@ -1108,7 +1108,7 @@ form.search-form > .actions.edit-form-actions {
 }
 
 
-/* v0.0.32: settings page layout and Google Drive form spacing */
+/* v0.0.37: settings page layout and Google Drive form spacing */
 .settings-google-form .grid {
   margin-top: 18px !important;
 }
@@ -1123,7 +1123,7 @@ form.search-form > .actions.edit-form-actions {
   padding-top: 0 !important;
 }
 
-/* v0.0.32: query action buttons lower than input fields */
+/* v0.0.37: query action buttons lower than input fields */
 .card .card-body form.search-form > .actions:not(.settings-actions-compact),
 .card .card-body form.search-form > .actions.form-actions-separated:not(.settings-actions-compact),
 form.search-form > .actions.form-actions-separated:not(.settings-actions-compact),
@@ -1132,7 +1132,7 @@ form.search-form > .actions.edit-form-actions:not(.settings-actions-compact) {
   padding-top: 10px !important;
 }
 
-/* v0.0.32: fixed operation columns should not display resize handle */
+/* v0.0.37: fixed operation columns should not display resize handle */
 .fixed-width-th {
   position: relative;
 }
@@ -1150,7 +1150,7 @@ th[data-no-resize="true"] .column-resizer {
 }
 
 
-/* v0.0.32: payment receive page layout */
+/* v0.0.37: payment receive page layout */
 .receive-entry-card {
   margin-top: 28px !important;
 }
@@ -1178,7 +1178,7 @@ th[data-no-resize="true"] .column-resizer {
 }
 
 
-/* v0.0.32: payment records as editable blocks */
+/* v0.0.37: payment records as editable blocks */
 .payment-records-stack {
   display: grid;
   gap: 18px;
@@ -1201,7 +1201,7 @@ th[data-no-resize="true"] .column-resizer {
 }
 
 
-/* v0.0.32: payment receive refinements */
+/* v0.0.37: payment receive refinements */
 .payment-records-stack + form .receive-entry-card,
 .receive-entry-card {
   margin-top: 14px !important;
@@ -1213,7 +1213,7 @@ th[data-no-resize="true"] .column-resizer {
 }
 
 
-/* v0.0.32 dashboard */
+/* v0.0.37 dashboard */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(160px, 1fr));
@@ -1285,7 +1285,7 @@ th[data-no-resize="true"] .column-resizer {
 }
 
 
-/* v0.0.32: operation columns are fixed and must never be clipped */
+/* v0.0.37: operation columns are fixed and must never be clipped */
 .resizable-table th.operation-th,
 .resizable-table td.operation-cell {
   width: 240px !important;
@@ -1317,7 +1317,7 @@ th[data-no-resize="true"] .column-resizer {
 }
 
 
-/* v0.0.32: sticky table headers and list summaries */
+/* v0.0.37: sticky table headers and list summaries */
 .table-scroll,
 .inventory-table-scroll,
 .vertical-scroll {
@@ -1357,4 +1357,244 @@ th[data-no-resize="true"] .column-resizer {
 
 .list-summary strong {
   color: #2563eb;
+}
+
+
+/* v0.0.37: readable list summary layout */
+.list-summary {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px 18px !important;
+  align-items: center !important;
+  line-height: 1.8 !important;
+}
+
+.list-summary > span {
+  display: inline-flex !important;
+  align-items: baseline !important;
+  gap: 6px !important;
+  margin-right: 18px !important;
+  padding-right: 18px !important;
+  border-right: 1px solid #d1d5db !important;
+}
+
+.list-summary > span:last-child {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+  border-right: 0 !important;
+}
+
+
+/* v0.0.37: report summary spacing fix */
+.list-summary {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 14px 24px !important;
+  margin: 0 0 24px 0 !important;
+  padding: 14px 18px !important;
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  line-height: 1.8 !important;
+}
+
+.list-summary > span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 24px 0 0 !important;
+  border-right: 1px solid #d1d5db !important;
+  white-space: nowrap !important;
+}
+
+.list-summary > span:last-child {
+  padding-right: 0 !important;
+  border-right: 0 !important;
+}
+
+.list-summary strong {
+  display: inline-block !important;
+  min-width: 44px !important;
+  color: #2563eb !important;
+  font-weight: 900 !important;
+}
+
+
+/* v0.0.37: force report summary to render exactly as: 筆數：3 | 總數量：3 | 總金額：NT$501 */
+.report-summary {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0 !important;
+  align-items: center !important;
+  margin: 0 0 34px 0 !important;
+  padding: 16px 20px !important;
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  line-height: 1.8 !important;
+  font-weight: 800 !important;
+}
+
+.report-summary > span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-right: 0 !important;
+  white-space: nowrap !important;
+}
+
+.report-summary .summary-separator {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin: 0 18px !important;
+  color: #9ca3af !important;
+  font-weight: 900 !important;
+}
+
+.report-summary strong {
+  display: inline-block !important;
+  min-width: 0 !important;
+  color: #2563eb !important;
+  font-weight: 900 !important;
+}
+
+/* v0.0.37: report table header must not be ellipsized; keep room for filter/sort controls */
+.resizable-table th {
+  text-overflow: clip !important;
+}
+
+.resizable-table th.filterable-th,
+.resizable-table th.sortable-th {
+  overflow: visible !important;
+  min-width: 120px;
+}
+
+#supplierPurchaseTable th:nth-child(1),
+#supplierPurchaseTable td:nth-child(1) {
+  min-width: 170px !important;
+}
+
+#supplierPurchaseTable th:nth-child(2),
+#supplierPurchaseTable td:nth-child(2) {
+  min-width: 200px !important;
+}
+
+
+/* v0.0.37: report summary must render with visible spaced pipes */
+.report-summary-line {
+  display: block !important;
+  width: fit-content !important;
+  margin: 0 0 44px 0 !important;
+  padding: 16px 20px !important;
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  color: #374151 !important;
+  font-weight: 800 !important;
+  line-height: 1.9 !important;
+  white-space: nowrap !important;
+}
+
+.report-summary-line span,
+.report-summary-line strong {
+  display: inline !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.report-summary-line strong {
+  color: #2563eb !important;
+  font-weight: 900 !important;
+}
+
+.report-summary-line .summary-pipe {
+  color: #6b7280 !important;
+  font-weight: 900 !important;
+}
+
+/* v0.0.37: supplier purchase report first two columns need enough room for headers + filter controls */
+#supplierPurchaseTable th:nth-child(1),
+#supplierPurchaseTable td:nth-child(1) {
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 340px !important;
+  text-overflow: clip !important;
+  overflow: visible !important;
+}
+
+#supplierPurchaseTable th:nth-child(2),
+#supplierPurchaseTable td:nth-child(2) {
+  width: 270px !important;
+  min-width: 270px !important;
+  max-width: 420px !important;
+  text-overflow: clip !important;
+  overflow: visible !important;
+}
+
+#supplierPurchaseTable th:nth-child(1),
+#supplierPurchaseTable th:nth-child(2) {
+  white-space: nowrap !important;
+}
+
+
+/* v0.0.37: final report summary and supplier report width fix */
+.report-summary-line {
+  display: block !important;
+  width: max-content !important;
+  margin: 0 !important;
+  padding: 16px 20px !important;
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  color: #374151 !important;
+  font-weight: 800 !important;
+  line-height: 1.9 !important;
+  white-space: pre !important;
+  word-spacing: 0 !important;
+}
+
+.report-summary-spacer {
+  height: 48px !important;
+  min-height: 48px !important;
+}
+
+.report-summary-line strong,
+.report-summary-line span {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+#supplierPurchaseTable {
+  table-layout: fixed !important;
+}
+
+#supplierPurchaseTable col:nth-child(1),
+#supplierPurchaseTable th:nth-child(1),
+#supplierPurchaseTable td:nth-child(1) {
+  width: 260px !important;
+  min-width: 260px !important;
+  max-width: 420px !important;
+}
+
+#supplierPurchaseTable col:nth-child(2),
+#supplierPurchaseTable th:nth-child(2),
+#supplierPurchaseTable td:nth-child(2) {
+  width: 320px !important;
+  min-width: 320px !important;
+  max-width: 520px !important;
+}
+
+#supplierPurchaseTable th:nth-child(1),
+#supplierPurchaseTable th:nth-child(2) {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
 }

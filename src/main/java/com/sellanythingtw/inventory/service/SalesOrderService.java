@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Comparator;
 import java.util.Map;
 
 @Service
@@ -116,7 +117,7 @@ public class SalesOrderService {
     }
 
     public List<SalesOrder> listAll() {
-        return salesOrderRepository.findAllByOrderByCreatedAtDesc();
+        return salesOrderRepository.findAll().stream().sorted(Comparator.comparing(o -> safe(o.getSalesNo()))).toList();
     }
 
 
@@ -126,7 +127,7 @@ public class SalesOrderService {
                                                 String status,
                                                 LocalDate dateFrom,
                                                 LocalDate dateTo) {
-        return salesOrderRepository.findAllByOrderByCreatedAtDesc().stream()
+        return salesOrderRepository.findAll().stream()
                 .map(order -> {
                     Map<String, Object> row = new LinkedHashMap<>();
                     Customer customer = customerRepository.findById(order.getCustomerId() == null ? -1L : order.getCustomerId()).orElse(null);
@@ -150,6 +151,7 @@ public class SalesOrderService {
                     }
                     return true;
                 })
+                .sorted(Comparator.comparing(row -> safe(((SalesOrder) row.get("order")).getSalesNo())))
                 .toList();
     }
 
